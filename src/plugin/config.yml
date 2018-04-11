@@ -1,0 +1,31 @@
+## YAML Template.
+---
+package:
+    author: Erik Pearson
+    name: narrative-info
+    description: A simple plugin composed of just a top level panel
+source:
+    styles:
+        -
+            file: styles.css
+install:
+    widgets:
+        -
+            id: narrative-info_panel
+            module: panel
+            type: factory
+    routes:
+        -
+            path: [narrative-info]
+            queryParams: 
+                param1: {}
+            widget: narrative-info_panel
+            authorization: true
+    menu:
+        -
+            name: narrative-info
+            definition:
+                path: [narrative-info]
+                label: Simple Sample Panel
+                icon: bicycle
+        

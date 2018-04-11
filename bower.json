@@ -1,0 +1,29 @@
+{
+    "name": "kbase-ui-plugin-narrative-info",
+    "description": "A plugin which can serve as an example or a starting point for a new plugin",
+    "author": [
+        "kbase"
+    ],
+    "keywords": [
+        "kbase",
+        "ui",
+        "plugin"
+    ],
+    "moduleType": "kbase-ui-plugin",
+    "main": "src/plugin/config.yml",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/tiramisu24/narrative-info.git"
+    },
+    "dependencies": {
+        "bluebird": "^3.0.0",
+        "bootstrap": "^3.3.0",
+        "kbase-common-js": "^2.5.0"
+    },
+    "devDependencies": {
+    },
+    "ignore": [
+        ".gitignore"
+    ],
+    "license": "SEE LICENSE IN LICENSE"
+}
