@@ -24,8 +24,9 @@ install:
     menu:
         -
             name: narrative-info
+            menus: ['authenticated']
             definition:
                 path: [narrative-info]
-                label: Simple Sample Panel
+                label: diane test
                 icon: bicycle
         
