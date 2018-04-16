@@ -18,12 +18,16 @@ define([
     'bluebird',
     'kb_common/html',
     'kb_common/bootstrapUtils',
-    './lib/utils'
+    './lib/utils',
+    'kb_common/jsonRpc/genericClient',
+    './lib/rpc'
 ], function (
     Promise, 
     html, 
     BS,
-    Utils
+    Utils,
+    GenericClient,
+    RPC
 ) {
     /* DOC: strict mode
         * We always set strict mode with the following magic javascript
@@ -55,7 +59,13 @@ define([
             * and an array of subwidgets (children).
             */
         var hostNode, container,
-            runtime = config.runtime;
+            runtime = config.runtime,
+            workspace = new GenericClient({
+                module: 'Workspace',
+                url: runtime.config('services.workspace.url'),
+                token: runtime.service('session').getAuthToken()
+            });
+
 
         /* DOC helper functions
             * Although not part of the Panel Interface, a common pattern is
@@ -82,7 +92,7 @@ define([
                     class: 'row'
                 }, [
                     div({class: 'col-sm-6'}, [
-                        h2('Sample Simple Plugin'),
+                        h2('Test'),
                         p([
                             'This is a very simple sample plugin. It consists of just a single panel, with ',
                             'some helper functions in lib/utils.js.'
@@ -173,6 +183,26 @@ define([
                 */
             return null;
         }
+        function makePopup(){
+            console.log('ws id is: ' + this.dataset.wsId);
+            console.log('ws name is: ' + this.dataset.wsName);
+            var wsName = this.dataset.wsName
+            Promise.all([workspace.callFunc('list_objects', 
+                            [{ workspaces: [wsName], ids: [this.dataset.wsId] }])])
+                .spread((res) => {
+                    this;
+                    var objectid = res[0][0][1]
+                    console.log(res[0][0]);
+                    console.log("objectid is : " +  objectid);
+                    Promise.all([workspace.callFunc('get_objectmeta',
+                        [{ id: objectid, workspace: wsName}])])
+                        .spread((res) => {
+                            console.log(res);
+                        })
+                    })
+
+            // debugger;
+        }
         function start(params) {
             /* DOC: dom access
             * In this case we are keeping things simple by using 
@@ -180,6 +210,24 @@ define([
             * here if we wish to.
             */
             container.innerHTML = layout();
+            Promise.all([workspace.callFunc('list_workspace_info', [{owners: ['dianez']}])])
+            .spread((res) => {
+                res[0].forEach((obj) => {
+                    var node = document.createElement('div');
+                    node.setAttribute('data-ws-id', obj[0]);
+                    node.setAttribute('data-ws-name', obj[1]);
+                    node.setAttribute('class', 'narrative_buttons');
+                    var narrative = document.createTextNode("Workspace with id: "+ obj[0]);
+                    node.appendChild(narrative);
+                    node.onclick = makePopup;
+                    container.appendChild(node)
+                    // console.log(obj[0]);
+                })
+                // return result
+            });
+            // debugger;
+
+            //TODO: make call to workspace then send to layout
 
             /* DOC: runtime interface
             * Since a panel title is also, logically, the title of
@@ -188,10 +236,9 @@ define([
             * takes care of modifying the window panel to accomodate
             * it.
             */
-            runtime.send('ui', 'setTitle', 'Simple Sample Plugin Title');
+            runtime.send('ui', 'setTitle', 'test');
         }
         function run(params) {
-            
         }
         function stop() {
             

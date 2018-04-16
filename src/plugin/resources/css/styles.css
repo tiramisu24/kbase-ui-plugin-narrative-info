@@ -2,3 +2,8 @@
 .plugin_narrative-info_panel h2 {
     color: red;
 }
+.narrative_buttons{
+    border: 2px solid grey;
+    padding: 3px;
+    margin: 2px;
+}
