@@ -65,6 +65,12 @@ define([
                 url: runtime.config('services.workspace.url'),
                 token: runtime.service('session').getAuthToken()
             });
+        
+        // debugger;
+        // RPC
+        var rpc = RPC.make({
+            runtime: runtime
+        });
 
 
         /* DOC helper functions
@@ -190,18 +196,72 @@ define([
             Promise.all([workspace.callFunc('list_objects', 
                             [{ workspaces: [wsName], ids: [this.dataset.wsId] }])])
                 .spread((res) => {
-                    this;
-                    var objectid = res[0][0][1]
-                    console.log(res[0][0]);
-                    console.log("objectid is : " +  objectid);
-                    Promise.all([workspace.callFunc('get_objectmeta',
-                        [{ id: objectid, workspace: wsName}])])
+    
+                    //assuming that the narrative is the first object
+                    //TODO check that it is 
+                    var objectId = res[0][0][6] + "/" + res[0][0][0] + "/" + res[0][0][4];
+                    console.log("objectid is : " +  objectId);
+                    Promise.all([workspace.callFunc('get_objects2',
+                        [{ objects: [{ref: objectId}]}])])
                         .spread((res) => {
-                            console.log(res);
+                            var data = res[0].data[0].data.cells;
+                            renderPopup(data);
                         })
-                    })
+                })
+                
 
             // debugger;
+        }
+
+        function renderPopup(data){
+            console.log(data);
+            var popUp = document.createElement('div');
+            popUp.appendChild(
+                document.createTextNode("Narrative iwth workspace id: " )
+            )
+            data.forEach((cell) => {
+                var node = document.createElement('div');
+                node.setAttribute('class', 'data-cells');
+                // var cellType = document.createElement('span');
+                // cellType.textContent= "Cell Type: " + cell.cell_type;
+                node.appendChild(textNode("Cell Type: " + cell.cell_type))
+
+                var appName, output;
+                if(cell.cell_type === "markdown"){
+                    appName = "markdown";
+                    output = cell.source;
+                }else if(cell.metadata.kbase){
+                    if (cell.metadata.kbase.type === "data"){
+                        appName = "Data Cell"
+                        output = cell.metadata.kbase.dataCell.objectInfo.name;
+                    }else {
+                        appName = cell.metadata.kbase.appCell.app.id;
+                        // debugger;
+                        // var jobState = cell.metadata.kbase.appCell.exec.jobState.job_State;
+                        // output = "Job State is: " + jobState;
+                        // if(jobState === "finished"){
+                        //     //TODO show output objects better
+                        //     output += ". Output objects are: " + cell.metadata.kbase.appCell.exec.output.byJob
+                        // }
+                    }
+                }else {
+                    appName = "Script";
+                }
+                node.appendChild(textNode(" App Type is: " + appName))
+                node.appendChild(textNode("  Source: " + output))
+
+                node.appendChild(document.createTextNode("  Source: " + output))
+                popUp.appendChild(node);
+            })
+            var popUpContainer = document.getElementById('popup-container');
+            popUpContainer.innerHTML = "";
+            popUpContainer.appendChild(popUp);
+        }
+
+        function textNode(text){
+            var node = document.createElement('span');
+            node.textContent = text;
+            return node;
         }
         function start(params) {
             /* DOC: dom access
@@ -209,7 +269,11 @@ define([
             * the plain DOM API. We could also use jquery 
             * here if we wish to.
             */
-            container.innerHTML = layout();
+            // container.innerHTML = layout();
+            var narrativesContainer = document.createElement('div');
+            narrativesContainer.setAttribute('id', 'narratives-container');
+            container.appendChild(narrativesContainer);
+
             Promise.all([workspace.callFunc('list_workspace_info', [{owners: ['dianez']}])])
             .spread((res) => {
                 res[0].forEach((obj) => {
@@ -220,14 +284,26 @@ define([
                     var narrative = document.createTextNode("Workspace with id: "+ obj[0]);
                     node.appendChild(narrative);
                     node.onclick = makePopup;
-                    container.appendChild(node)
+                    narrativesContainer.appendChild(node)
                     // console.log(obj[0]);
                 })
                 // return result
             });
+
+            var popUpContainer = document.createElement('div');
+            popUpContainer.setAttribute('id', 'popup-container');
+            container.appendChild(popUpContainer);
+
+            // rpc.call('NarrativeMethodStore', 'list_methods_full_info', {tags: "tags"})
+            //     .then((result) => {
+            //         debugger;
+            //     })
             // debugger;
 
             //TODO: make call to workspace then send to layout
+
+
+            // return rpc.call('KBaseSearchEngine', 'search_objects', [param])
 
             /* DOC: runtime interface
             * Since a panel title is also, logically, the title of
