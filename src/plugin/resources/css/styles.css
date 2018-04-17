@@ -7,3 +7,25 @@
     padding: 3px;
     margin: 2px;
 }
+.data-cells{
+    padding: 4px;
+    margin: 4px;
+    background-color: bisque;
+}
+/* 
+span{
+  width: 250px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+span{
+    display: block; overflow: hidden; word-wrap: break-word; text-overflow: ellipsis;
+} */
+
+.data-cells img {
+    width: 50px;
+    height: 50px;
+}
+

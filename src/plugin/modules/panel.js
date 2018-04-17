@@ -58,7 +58,7 @@ define([
             * created by the Panel for its own use (container),
             * and an array of subwidgets (children).
             */
-        var hostNode, container,
+        var hostNode, container, appsLib,
             runtime = config.runtime,
             workspace = new GenericClient({
                 module: 'Workspace',
@@ -66,11 +66,22 @@ define([
                 token: runtime.service('session').getAuthToken()
             });
         
-        // debugger;
-        // RPC
+
         var rpc = RPC.make({
             runtime: runtime
         });
+        
+        rpc.call('NarrativeMethodStore', 'list_methods', { tags: "tags" })
+                            .then((result) => {
+                                var appMap = {};
+                                result[0].forEach(function (app) {
+                                    appMap[app.id] = {
+                                        info: app
+                                    };
+                                });
+                                appsLib =  appMap;                            
+                            })
+                    
 
 
         /* DOC helper functions
@@ -190,8 +201,6 @@ define([
             return null;
         }
         function makePopup(){
-            console.log('ws id is: ' + this.dataset.wsId);
-            console.log('ws name is: ' + this.dataset.wsName);
             var wsName = this.dataset.wsName
             Promise.all([workspace.callFunc('list_objects', 
                             [{ workspaces: [wsName], ids: [this.dataset.wsId] }])])
@@ -200,33 +209,26 @@ define([
                     //assuming that the narrative is the first object
                     //TODO check that it is 
                     var objectId = res[0][0][6] + "/" + res[0][0][0] + "/" + res[0][0][4];
-                    console.log("objectid is : " +  objectId);
                     Promise.all([workspace.callFunc('get_objects2',
                         [{ objects: [{ref: objectId}]}])])
                         .spread((res) => {
-                            var data = res[0].data[0].data.cells;
-                            renderPopup(data);
+                            renderPopup(res[0].data[0]);
                         })
                 })
-                
-
-            // debugger;
         }
 
-        function renderPopup(data){
-            console.log(data);
+        function renderPopup(res){
+            var data = res.data.cells;
+            console.log(res);
             var popUp = document.createElement('div');
-            popUp.appendChild(
-                document.createTextNode("Narrative iwth workspace id: " )
-            )
+            popUp.appendChild(document.createTextNode("Narrative iwth workspace id: " + res.info[6]))
             data.forEach((cell) => {
                 var node = document.createElement('div');
                 node.setAttribute('class', 'data-cells');
-                // var cellType = document.createElement('span');
-                // cellType.textContent= "Cell Type: " + cell.cell_type;
-                node.appendChild(textNode("Cell Type: " + cell.cell_type))
 
-                var appName, output;
+                
+
+                var appName, output, appLogo;
                 if(cell.cell_type === "markdown"){
                     appName = "markdown";
                     output = cell.source;
@@ -236,7 +238,13 @@ define([
                         output = cell.metadata.kbase.dataCell.objectInfo.name;
                     }else {
                         appName = cell.metadata.kbase.appCell.app.id;
-                        // debugger;
+                        var info = appsLib[appName];
+                        if(info && info.info.icon){
+                            var imageUrl = "https://ci.kbase.us/services/narrative_method_store/" +  info.info.icon.url;
+                            appLogo = document.createElement('IMG');
+                            appLogo.src = imageUrl;
+                        }
+
                         // var jobState = cell.metadata.kbase.appCell.exec.jobState.job_State;
                         // output = "Job State is: " + jobState;
                         // if(jobState === "finished"){
@@ -247,10 +255,13 @@ define([
                 }else {
                     appName = "Script";
                 }
+                if(appLogo){
+                    node.appendChild(appLogo);
+                }
+                node.appendChild(textNode("Cell Type: " + cell.cell_type))
                 node.appendChild(textNode(" App Type is: " + appName))
                 node.appendChild(textNode("  Source: " + output))
 
-                node.appendChild(document.createTextNode("  Source: " + output))
                 popUp.appendChild(node);
             })
             var popUpContainer = document.getElementById('popup-container');
@@ -272,6 +283,7 @@ define([
             // container.innerHTML = layout();
             var narrativesContainer = document.createElement('div');
             narrativesContainer.setAttribute('id', 'narratives-container');
+            narrativesContainer.setAttribute('class', 'col-sm-6');
             container.appendChild(narrativesContainer);
 
             Promise.all([workspace.callFunc('list_workspace_info', [{owners: ['dianez']}])])
@@ -292,12 +304,10 @@ define([
 
             var popUpContainer = document.createElement('div');
             popUpContainer.setAttribute('id', 'popup-container');
+            popUpContainer.setAttribute('class', 'col-sm-6');
             container.appendChild(popUpContainer);
 
-            // rpc.call('NarrativeMethodStore', 'list_methods_full_info', {tags: "tags"})
-            //     .then((result) => {
-            //         debugger;
-            //     })
+      
             // debugger;
 
             //TODO: make call to workspace then send to layout
