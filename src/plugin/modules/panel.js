@@ -201,27 +201,58 @@ define([
             return null;
         }
         function makePopup(){
-            var wsName = this.dataset.wsName
+            var wsName = this.dataset.wsName;
+            var narrativeName = this.dataset.narrativeName;
+            //narrative names
             Promise.all([workspace.callFunc('list_objects', 
                             [{ workspaces: [wsName], ids: [this.dataset.wsId] }])])
                 .spread((res) => {
-    
                     //assuming that the narrative is the first object
                     //TODO check that it is 
                     var objectId = res[0][0][6] + "/" + res[0][0][0] + "/" + res[0][0][4];
                     Promise.all([workspace.callFunc('get_objects2',
                         [{ objects: [{ref: objectId}]}])])
                         .spread((res) => {
-                            renderPopup(res[0].data[0]);
+                            var popUpContainer = document.getElementById('popup-container');
+                            popUpContainer.innerHTML = "";
+
+
+                            var summarySection = document.createElement('div');
+                            summarySection.setAttribute('id', 'summary-section')
+
+                            var narrativeTitle = document.createElement('h2');
+                            narrativeTitle.textContent = narrativeName;
+                            summarySection.appendChild(narrativeTitle);
+
+                            var authorSection = document.createElement('div');
+                            authorSection.textContent = "by " + this.dataset.authorName + ", last updated " + this.dataset.createdDate;
+                            summarySection.appendChild(authorSection);
+
+                            popUpContainer.appendChild(summarySection);
+
+                            //rows of apps
+                            var detailsSection = makeDetails(res[0].data[0].data.cells);
+                            popUpContainer.appendChild(detailsSection);
+
                         })
                 })
         }
 
-        function renderPopup(res){
-            var data = res.data.cells;
-            console.log(res);
+        function makeDetails(data){
+
+            //add the first cell as abstract (if it exists)
+            var abstract = document.createElement('div');
+            document.getElementById('summary-section').appendChild(abstract);
+            if(data[0].cell_type === 'markdown'){
+                abstract.textContent = data[0].source;
+            }else{
+                abstract.textContent = "no abstract for this narrative"
+            }
+
+            // var data = res.data.cells;
+            // console.log(res);
             var popUp = document.createElement('div');
-            popUp.appendChild(document.createTextNode("Narrative iwth workspace id: " + res.info[6]))
+            // popUp.appendChild(document.createTextNode("Narrative iwth workspace id: " + res.info[6]))
             data.forEach((cell) => {
                 var node = document.createElement('div');
                 node.setAttribute('class', 'data-cells');
@@ -237,12 +268,15 @@ define([
                         appName = "Data Cell"
                         output = cell.metadata.kbase.dataCell.objectInfo.name;
                     }else {
+                        
                         appName = cell.metadata.kbase.appCell.app.id;
                         var info = appsLib[appName];
                         if(info && info.info.icon){
                             var imageUrl = "https://ci.kbase.us/services/narrative_method_store/" +  info.info.icon.url;
                             appLogo = document.createElement('IMG');
                             appLogo.src = imageUrl;
+                        }else{
+                            //default code img
                         }
 
                         // var jobState = cell.metadata.kbase.appCell.exec.jobState.job_State;
@@ -264,9 +298,8 @@ define([
 
                 popUp.appendChild(node);
             })
-            var popUpContainer = document.getElementById('popup-container');
-            popUpContainer.innerHTML = "";
-            popUpContainer.appendChild(popUp);
+
+            return popUp;
         }
 
         function textNode(text){
@@ -292,14 +325,16 @@ define([
                     var node = document.createElement('div');
                     node.setAttribute('data-ws-id', obj[0]);
                     node.setAttribute('data-ws-name', obj[1]);
+                    node.setAttribute('data-author-name', obj[2]);
+                    node.setAttribute('data-created-date', obj[3]);
+                    node.setAttribute('data-narrative-name', obj[8].narrative_nice_name);
+
                     node.setAttribute('class', 'narrative_buttons');
                     var narrative = document.createTextNode("Workspace with id: "+ obj[0]);
                     node.appendChild(narrative);
                     node.onclick = makePopup;
                     narrativesContainer.appendChild(node)
-                    // console.log(obj[0]);
                 })
-                // return result
             });
 
             var popUpContainer = document.createElement('div');
@@ -308,7 +343,6 @@ define([
             container.appendChild(popUpContainer);
 
       
-            // debugger;
 
             //TODO: make call to workspace then send to layout
 

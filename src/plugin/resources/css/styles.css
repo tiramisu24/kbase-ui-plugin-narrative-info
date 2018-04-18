@@ -29,3 +29,7 @@ span{
     height: 50px;
 }
 
+#summary-section{
+    border-bottom: 1px solid black;
+}
+
