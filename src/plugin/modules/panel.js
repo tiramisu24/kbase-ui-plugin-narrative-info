@@ -46,7 +46,7 @@ define([
         h2 = t('h1'),
         p = t('p'),
         div = t('div');
-
+    
     function factory(config) {
         /* DOC: widget variables and factory pattern
             * In the factory pattery for object creation, we can just
@@ -70,7 +70,6 @@ define([
         var rpc = RPC.make({
             runtime: runtime
         });
-        
         rpc.call('NarrativeMethodStore', 'list_methods', { tags: "tags" })
                             .then((result) => {
                                 var appMap = {};
@@ -202,14 +201,15 @@ define([
         }
         function makePopup(){
             var wsName = this.dataset.wsName;
+            var wsId = this.dataset.wsId;
             var narrativeName = this.dataset.narrativeName;
             //narrative names
             Promise.all([workspace.callFunc('list_objects', 
-                            [{ workspaces: [wsName], ids: [this.dataset.wsId] }])])
-                .spread((res) => {
+                        [{ workspaces: [wsName], ids: [wsId] }])])
+                .spread((objs) => {
                     //assuming that the narrative is the first object
                     //TODO check that it is 
-                    var objectId = res[0][0][6] + "/" + res[0][0][0] + "/" + res[0][0][4];
+                    var objectId = objs[0][0][6] + "/" + objs[0][0][0] + "/" + objs[0][0][4];
                     Promise.all([workspace.callFunc('get_objects2',
                         [{ objects: [{ref: objectId}]}])])
                         .spread((res) => {
@@ -233,6 +233,15 @@ define([
                             //rows of apps
                             var detailsSection = makeDetails(res[0].data[0].data.cells);
                             popUpContainer.appendChild(detailsSection);
+                          
+
+                            var openNarrativeButton = document.createElement('a');
+                            openNarrativeButton.textContent = "Open this Narrative";
+                            openNarrativeButton.href = "narrative/ws." + wsId + ".obj." + objs[0][0][0];
+                            openNarrativeButton.target = "_blank";
+                            popUpContainer.appendChild(openNarrativeButton);
+
+                            //runtime.getConfig('services.narrative.url')
 
                         })
                 })
@@ -268,7 +277,6 @@ define([
                         appName = "Data Cell"
                         output = cell.metadata.kbase.dataCell.objectInfo.name;
                     }else {
-                        
                         appName = cell.metadata.kbase.appCell.app.id;
                         var info = appsLib[appName];
                         if(info && info.info.icon){
