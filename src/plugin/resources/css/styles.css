@@ -16,6 +16,7 @@
 }
 .data-cells > div {
     padding: 4px 8px;
+    height: 65px;
 }
 
 .data-cells i {
@@ -33,10 +34,18 @@
     height: 50px;
 }
 
+.data-cells .fa {
+    font-size: 3em;
+}
+
 #summary-section{
     border-bottom: 1px solid black;
 }
-.wrap-line{
-    background-color: pink;
+.wrap-line > div{
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    width: 100%;
+    display: block;
+    overflow: hidden
 }
 

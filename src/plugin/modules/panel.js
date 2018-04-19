@@ -276,22 +276,25 @@ define([
 
                 //cell is markdown
                 if(cell.cell_type === "markdown"){
-                    appName = "markdown";
+                    appName = "Markdown";
                     output = cell.source;
                     var defaultIcon = document.createElement('div');
                     defaultIcon.setAttribute('class', 'fa fa-inverse fa-stack-1x fa-paragraph fa-3x');
                     appLogo.appendChild(defaultIcon);
-
-                    row.setAttribute('class', 'data-cells wrap-line');
+                    appDes.setAttribute('class', 'col-sm-9 wrap-line');
                 //cell is an app
                 }else if(cell.metadata.kbase){
                     if (cell.metadata.kbase.type === "data"){
-                        //data from cell.metadata.kbase.dataCell.objectInfo
-                        //formate is : type: {module: typeModule, name: typeName}
-                        //runtime.getService('type').getIcon({"type":{"module":"KBaseGenomes", "name": "Genome"}})
+                        var objectInfo = cell.metadata.kbase.dataCell.objectInfo;
+                        var type = {type: {module: objectInfo.typeModule, name: objectInfo.typeName}};
+    
+                        var typeInfo = runtime.getService('type').getIcon({"type":{"module":"KBaseGenomes", "name": "Genome"}});
+                        var icon = document.createElement('div');
+                        icon.innerHTML = typeInfo.html;
+                        appLogo.appendChild(icon);
                         appName = "Data Cell"
-                        output = cell.metadata.kbase.dataCell.objectInfo.name;
-                        appLogo.setAttribute('class', 'fa fa-inverse fa-stack-1x fa-paragraph');
+                        output = "Data: " + cell.metadata.kbase.dataCell.objectInfo.name;
+
                     } else if (cell.metadata.kbase.type === "app") {
                         var appKey = cell.metadata.kbase.appCell.app.id;
                         var info = appsLib[appKey];
@@ -307,10 +310,9 @@ define([
                             var defaultIcon = document.createElement('div');                               
                             defaultIcon.setAttribute('class', 'fa fa-inverse fas fa-terminal fa-3x');
                             appLogo.appendChild(defaultIcon); 
-                            //default code img
                         }
                         // debugger;
-                        output = JSON.stringify(cell.metadata.kbase.appCell.params);
+                        output = "Input: " + JSON.stringify(cell.metadata.kbase.appCell.params);
                         // var jobState = cell.metadata.kbase.appCell.exec.jobState.job_State;
                         // output = "Job State is: " + jobState;
                         // if(jobState === "finished"){
@@ -326,8 +328,8 @@ define([
                 }
 
 
-                appDes.appendChild(textNode(" App Type is: " + appName))
-                appDes.appendChild(textNode("  Source: " + output))
+                appDes.appendChild(textNode(appName))
+                appDes.appendChild(textNode(output))
 
 
                 popUp.appendChild(row);
