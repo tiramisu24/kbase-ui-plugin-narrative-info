@@ -248,7 +248,6 @@ define([
         }
 
         function makeDetails(data){
-
             //add the first cell as abstract (if it exists)
             var abstract = document.createElement('div');
             document.getElementById('summary-section').appendChild(abstract);
@@ -258,35 +257,60 @@ define([
                 abstract.textContent = "no abstract for this narrative"
             }
 
-            // var data = res.data.cells;
-            // console.log(res);
+            //details view
             var popUp = document.createElement('div');
-            // popUp.appendChild(document.createTextNode("Narrative iwth workspace id: " + res.info[6]))
+            popUp.setAttribute('id', 'details-section');
+
             data.forEach((cell) => {
-                var node = document.createElement('div');
-                node.setAttribute('class', 'data-cells');
+                var row = document.createElement('div'),
+                    appLogo = document.createElement('div'),
+                    appDes = document.createElement('div');
 
-                
+                row.setAttribute('class', 'data-cells');
+                appLogo.setAttribute('class', 'col-sm-3 center-items');
+                appDes.setAttribute('class', 'col-sm-9');
+                row.appendChild(appLogo);
+                row.appendChild(appDes);
 
-                var appName, output, appLogo;
+                var appName, output;
+
+                //cell is markdown
                 if(cell.cell_type === "markdown"){
                     appName = "markdown";
                     output = cell.source;
+                    var defaultIcon = document.createElement('div');
+                    defaultIcon.setAttribute('class', 'fa fa-inverse fa-stack-1x fa-paragraph fa-3x');
+                    appLogo.appendChild(defaultIcon);
+
+                    row.setAttribute('class', 'data-cells wrap-line');
+                //cell is an app
                 }else if(cell.metadata.kbase){
                     if (cell.metadata.kbase.type === "data"){
+                        //data from cell.metadata.kbase.dataCell.objectInfo
+                        //formate is : type: {module: typeModule, name: typeName}
+                        //runtime.getService('type').getIcon({"type":{"module":"KBaseGenomes", "name": "Genome"}})
                         appName = "Data Cell"
                         output = cell.metadata.kbase.dataCell.objectInfo.name;
-                    }else {
-                        appName = cell.metadata.kbase.appCell.app.id;
-                        var info = appsLib[appName];
+                        appLogo.setAttribute('class', 'fa fa-inverse fa-stack-1x fa-paragraph');
+                    } else if (cell.metadata.kbase.type === "app") {
+                        var appKey = cell.metadata.kbase.appCell.app.id;
+                        var info = appsLib[appKey];
+                        // debugger;
                         if(info && info.info.icon){
+                            appName = info.info.name;
                             var imageUrl = "https://ci.kbase.us/services/narrative_method_store/" +  info.info.icon.url;
-                            appLogo = document.createElement('IMG');
-                            appLogo.src = imageUrl;
+                            var customLogo = document.createElement('IMG');
+                            customLogo.src = imageUrl;
+                            appLogo.appendChild(customLogo);
                         }else{
+                            appName = "Script";
+                            var defaultIcon = document.createElement('div');                               
+                            defaultIcon.setAttribute('class', 'fa fa-inverse fas fa-terminal fa-3x');
+                            appLogo.appendChild(defaultIcon); 
                             //default code img
                         }
-
+                        // debugger;
+                        output = JSON.stringify(cell.metadata.kbase.appCell.params);
                         // var jobState = cell.metadata.kbase.appCell.exec.jobState.job_State;
                         // output = "Job State is: " + jobState;
                         // if(jobState === "finished"){
@@ -295,23 +319,25 @@ define([
                         // }
                     }
                 }else {
-                    appName = "Script";
-                }
-                if(appLogo){
-                    node.appendChild(appLogo);
-                }
-                node.appendChild(textNode("Cell Type: " + cell.cell_type))
-                node.appendChild(textNode(" App Type is: " + appName))
-                node.appendChild(textNode("  Source: " + output))
+                    //cell is a script
+                    debugger;
+                    appName = "Script"
 
-                popUp.appendChild(node);
+                }
+
+
+                appDes.appendChild(textNode(" App Type is: " + appName))
+                appDes.appendChild(textNode("  Source: " + output))
+
+
+                popUp.appendChild(row);
             })
 
             return popUp;
         }
 
         function textNode(text){
-            var node = document.createElement('span');
+            var node = document.createElement('div');
             node.textContent = text;
             return node;
         }
@@ -324,7 +350,7 @@ define([
             // container.innerHTML = layout();
             var narrativesContainer = document.createElement('div');
             narrativesContainer.setAttribute('id', 'narratives-container');
-            narrativesContainer.setAttribute('class', 'col-sm-6');
+            narrativesContainer.setAttribute('class', 'col-sm-4');
             container.appendChild(narrativesContainer);
 
             Promise.all([workspace.callFunc('list_workspace_info', [{owners: ['dianez']}])])
@@ -347,7 +373,7 @@ define([
 
             var popUpContainer = document.createElement('div');
             popUpContainer.setAttribute('id', 'popup-container');
-            popUpContainer.setAttribute('class', 'col-sm-6');
+            popUpContainer.setAttribute('class', 'col-sm-8');
             container.appendChild(popUpContainer);
 
       
