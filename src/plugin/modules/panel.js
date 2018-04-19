@@ -225,6 +225,7 @@ define([
                             summarySection.appendChild(narrativeTitle);
 
                             var authorSection = document.createElement('div');
+                            authorSection.style.fontStyle = "italic";
                             authorSection.textContent = "by " + this.dataset.authorName + ", last updated " + this.dataset.createdDate;
                             summarySection.appendChild(authorSection);
 
@@ -239,9 +240,14 @@ define([
                             openNarrativeButton.textContent = "Open this Narrative";
                             openNarrativeButton.href = "narrative/ws." + wsId + ".obj." + objs[0][0][0];
                             openNarrativeButton.target = "_blank";
-                            popUpContainer.appendChild(openNarrativeButton);
+                            openNarrativeButton.setAttribute('class', "btn btn-primary");
+                            openNarrativeButton.style.width = "300px";
 
-                            //runtime.getConfig('services.narrative.url')
+                            var buttonWrapper = document.createElement('div');
+                            buttonWrapper.appendChild(openNarrativeButton);
+                            buttonWrapper.style.textAlign = "center";
+
+                            popUpContainer.appendChild(buttonWrapper);
 
                         })
                 })
@@ -276,24 +282,27 @@ define([
 
                 //cell is markdown
                 if(cell.cell_type === "markdown"){
-                    appName = "Markdown";
-                    output = cell.source;
+                    appDes.appendChild(textNode("Markdown"));
+                    appDes.appendChild(textNode(cell.source));
+
                     var defaultIcon = document.createElement('div');
-                    defaultIcon.setAttribute('class', 'fa fa-inverse fa-stack-1x fa-paragraph fa-3x');
+                    defaultIcon.setAttribute('class', 'fa fa-paragraph fa-3x');
                     appLogo.appendChild(defaultIcon);
-                    appDes.setAttribute('class', 'col-sm-9 wrap-line');
+                    appDes.setAttribute('class', 'col-sm-9 ellipsis');
                 //cell is an app
                 }else if(cell.metadata.kbase){
                     if (cell.metadata.kbase.type === "data"){
+                        appDes.appendChild(textNode("Data Cell"));
+                        appDes.appendChild(textNode("Data: " + cell.metadata.kbase.dataCell.objectInfo.name));
+
                         var objectInfo = cell.metadata.kbase.dataCell.objectInfo;
                         var type = {type: {module: objectInfo.typeModule, name: objectInfo.typeName}};
     
                         var typeInfo = runtime.getService('type').getIcon({"type":{"module":"KBaseGenomes", "name": "Genome"}});
                         var icon = document.createElement('div');
+                        icon.style.fontSize = "3em";
                         icon.innerHTML = typeInfo.html;
                         appLogo.appendChild(icon);
-                        appName = "Data Cell"
-                        output = "Data: " + cell.metadata.kbase.dataCell.objectInfo.name;
 
                     } else if (cell.metadata.kbase.type === "app") {
                         var appKey = cell.metadata.kbase.appCell.app.id;
@@ -308,11 +317,19 @@ define([
                         }else{
                             appName = "Script";
                             var defaultIcon = document.createElement('div');                               
-                            defaultIcon.setAttribute('class', 'fa fa-inverse fas fa-terminal fa-3x');
+                            defaultIcon.setAttribute('class', 'fa fas fa-terminal fa-3x');
                             appLogo.appendChild(defaultIcon); 
                         }
-                        // debugger;
-                        output = "Input: " + JSON.stringify(cell.metadata.kbase.appCell.params);
+
+                        appDes.appendChild(textNode(appName));
+                        var params = cell.metadata.kbase.appCell.params;
+                        output = "Input: ";
+                        appDes.appendChild(textNode(output))
+
+                        Object.keys(params).forEach((key) => {
+                            appDes.appendChild(textNode(key + ": " + params[key]))
+                        })
+
                         // var jobState = cell.metadata.kbase.appCell.exec.jobState.job_State;
                         // output = "Job State is: " + jobState;
                         // if(jobState === "finished"){
@@ -329,7 +346,7 @@ define([
 
 
                 appDes.appendChild(textNode(appName))
-                appDes.appendChild(textNode(output))
+                // appDes.appendChild(textNode(output))
 
 
                 popUp.appendChild(row);
@@ -375,7 +392,7 @@ define([
 
             var popUpContainer = document.createElement('div');
             popUpContainer.setAttribute('id', 'popup-container');
-            popUpContainer.setAttribute('class', 'col-sm-8');
+            popUpContainer.setAttribute('class', 'col-sm-7');
             container.appendChild(popUpContainer);
 
       
