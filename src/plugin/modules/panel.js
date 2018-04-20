@@ -375,6 +375,9 @@ define([
             Promise.all([workspace.callFunc('list_workspace_info', [{owners: ['dianez']}])])
             .spread((res) => {
                 res[0].forEach((obj) => {
+                    if (obj[8] && obj[8].narrative_nice_name){
+
+
                     var node = document.createElement('div');
                     node.setAttribute('data-ws-id', obj[0]);
                     node.setAttribute('data-ws-name', obj[1]);
@@ -387,6 +390,7 @@ define([
                     node.appendChild(narrative);
                     node.onclick = makePopup;
                     narrativesContainer.appendChild(node)
+                    }
                 })
             });
 
