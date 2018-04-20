@@ -339,8 +339,10 @@ define([
                     }
                 }else {
                     //cell is a script
-                    debugger;
                     appName = "Script"
+                    var defaultIcon = document.createElement('div');
+                    defaultIcon.setAttribute('class', 'fa fas fa-terminal fa-3x');
+                    appLogo.appendChild(defaultIcon); 
 
                 }
 
@@ -372,7 +374,7 @@ define([
             narrativesContainer.setAttribute('class', 'col-sm-4');
             container.appendChild(narrativesContainer);
 
-            Promise.all([workspace.callFunc('list_workspace_info', [{owners: ['dianez']}])])
+            Promise.all([workspace.callFunc('list_workspace_info', [{owners: ['eapearson']}])])
             .spread((res) => {
                 res[0].forEach((obj) => {
                     if (obj[8] && obj[8].narrative_nice_name){
