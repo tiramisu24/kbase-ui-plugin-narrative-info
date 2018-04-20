@@ -383,7 +383,7 @@ define([
                     node.setAttribute('data-narrative-name', obj[8].narrative_nice_name);
 
                     node.setAttribute('class', 'narrative_buttons');
-                    var narrative = document.createTextNode("Workspace with id: "+ obj[0]);
+                    var narrative = document.createTextNode("Workspace with Narrative: " + obj[8].narrative_nice_name);
                     node.appendChild(narrative);
                     node.onclick = makePopup;
                     narrativesContainer.appendChild(node)
