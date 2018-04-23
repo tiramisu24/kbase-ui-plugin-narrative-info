@@ -269,7 +269,7 @@ define([
                     runState = document.createElement('div');
 
                 row.setAttribute('class', 'data-cells');
-                appLogo.setAttribute('class', 'col-sm-3 right-align');
+                appLogo.setAttribute('class', 'col-sm-2 right-align');
                 appDes.setAttribute('class', 'col-sm-9 ellipsis');
                 runState.setAttribute('class', 'col-sm-2 right-align');
                 row.appendChild(appLogo);
@@ -339,7 +339,8 @@ define([
                         })
                         var jobState = cell.metadata.kbase.appCell.fsm.currentState.mode;
                         output = "Job State is: " + jobState;
-                        runState.appendChild(textNode(output));
+                        // runState.appendChild(textNode(output));'
+                        runState.appendChild(appStateIcons(jobState));
    
                     }
                 }else {
@@ -348,6 +349,8 @@ define([
                     var defaultIcon = document.createElement('div');
                     defaultIcon.setAttribute('class', 'fa fas fa-terminal fa-3x');
                     appLogo.appendChild(defaultIcon); 
+                    runState.appendChild(appStateIcons("emergency"));
+
 
                 }
 
@@ -356,6 +359,32 @@ define([
             })
 
             return popUp;
+        }
+
+        function appStateIcons(state){
+            var stateIcon = document.createElement('div');
+            stateIcon.style.fontSize = "3em";
+
+            if(state === "success"){
+                stateIcon.setAttribute('class', 'fa fas fa-check-circle');
+                //app finished
+            }else if (state === "error"){
+                stateIcon.setAttribute('class', 'fa fas fa-exclamation-circle');
+
+                //app finished with error
+            }else if (state === "canceled"){
+                stateIcon.setAttribute('class', 'fa fas fa-times');
+
+                //app canceled
+            }else if (state === "emergency" ) {
+                stateIcon.setAttribute('class', 'fa fas fa-ambulance');
+
+            }else {
+                stateIcon.setAttribute('class', 'fa fas fa-spinner');
+
+                //app is running
+            }
+            return stateIcon;
         }
 
         function textNode(text){
