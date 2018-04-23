@@ -203,61 +203,51 @@ define([
             var wsName = this.dataset.wsName;
             var wsId = this.dataset.wsId;
             var narrativeName = this.dataset.narrativeName;
+            var narrativeNum = this.dataset.narrativeNum;
 
-            Promise.all([workspace.callFunc('list_objects', 
-                        [{ workspaces: [wsName], ids: [wsId] }])])
-                .spread((objs) => {
-                    //obj ordering start at 1
-                    var objNum = Number(this.dataset.narrativeNum) - 1 ;
-                    console.log(objNum);
-                    var objectId = objs[0][objNum][6] + "/" + objs[0][objNum][0] + "/" + objs[0][objNum][4];
-                    Promise.all([workspace.callFunc('get_objects2',
-                        [{ objects: [{ref: objectId}]}])])
-                        .spread((res) => {
-                            var popUpContainer = document.getElementById('popup-container');
-                            popUpContainer.innerHTML = "";
+            Promise.all([workspace.callFunc('get_objects2',
+                [{ objects: [{ objid: narrativeNum, wsid: wsId }]}])])
+                .spread((res) => {
+                    var popUpContainer = document.getElementById('popup-container');
+                    popUpContainer.innerHTML = "";
 
 
-                            var summarySection = document.createElement('div');
-                            summarySection.setAttribute('id', 'summary-section')
+                    var summarySection = document.createElement('div');
+                    summarySection.setAttribute('id', 'summary-section')
 
-                            var narrativeTitle = document.createElement('h2');
-                            narrativeTitle.textContent = narrativeName;
-                            summarySection.appendChild(narrativeTitle);
+                    var narrativeTitle = document.createElement('h2');
+                    narrativeTitle.textContent = narrativeName;
+                    summarySection.appendChild(narrativeTitle);
 
-                            var authorSection = document.createElement('div');
-                            authorSection.style.fontStyle = "italic";
-                            authorSection.textContent = "by " + this.dataset.authorName + ", last updated " + this.dataset.createdDate;
-                            summarySection.appendChild(authorSection);
+                    var authorSection = document.createElement('div');
+                    authorSection.style.fontStyle = "italic";
+                    authorSection.textContent = "by " + this.dataset.authorName + ", last updated " + this.dataset.createdDate;
+                    summarySection.appendChild(authorSection);
 
-                            popUpContainer.appendChild(summarySection);
-                            //rows of apps
-                            if (res[0].data[0].data.cells){
-                                var detailsSection = makeDetails(res[0].data[0].data.cells);
-                                popUpContainer.appendChild(detailsSection);
-                            } else if (res[0].data[0].data.worksheets[0].cells){
-                                //old narratives
-                                var detailsSection = makeDetails(res[0].data[0].data.worksheets[0].cells);
-                                popUpContainer.appendChild(detailsSection);                                
-                            }
-                          
+                    popUpContainer.appendChild(summarySection);
+                    //rows of apps
+                    if (res[0].data[0].data.cells){
+                        var detailsSection = makeDetails(res[0].data[0].data.cells);
+                        popUpContainer.appendChild(detailsSection);
+                    } else if (res[0].data[0].data.worksheets[0].cells){
+                        //old narratives
+                        var detailsSection = makeDetails(res[0].data[0].data.worksheets[0].cells);
+                        popUpContainer.appendChild(detailsSection);                                
+                    }
 
-                            var openNarrativeButton = document.createElement('a');
-                            openNarrativeButton.textContent = "Open this Narrative";
-                            openNarrativeButton.href = "narrative/ws." + wsId + ".obj." + objs[0][0][0];
-                            openNarrativeButton.target = "_blank";
-                            openNarrativeButton.setAttribute('class', "btn btn-primary");
-                            openNarrativeButton.style.width = "300px";
+                    var openNarrativeButton = document.createElement('a');
+                    openNarrativeButton.textContent = "Open this Narrative";
+                    openNarrativeButton.href = "narrative/ws." + wsId + ".obj." + narrativeNum;
+                    openNarrativeButton.target = "_blank";
+                    openNarrativeButton.setAttribute('class', "btn btn-primary");
+                    openNarrativeButton.style.width = "300px";
 
-                            var buttonWrapper = document.createElement('div');
-                            buttonWrapper.appendChild(openNarrativeButton);
-                            buttonWrapper.style.textAlign = "center";
+                    var buttonWrapper = document.createElement('div');
+                    buttonWrapper.appendChild(openNarrativeButton);
+                    buttonWrapper.style.textAlign = "center";
 
-                            popUpContainer.appendChild(buttonWrapper);
-
-                        })
-                })
-        
+                    popUpContainer.appendChild(buttonWrapper);
+                });
             
         }
 
@@ -300,16 +290,22 @@ define([
                 //cell is an app
                 }else if(cell.metadata.kbase){
                     if (cell.metadata.kbase.type === "data"){
-
+                        // debugger;
                         appDes.appendChild(textNode("Data Cell"));
-                        appDes.appendChild(textNode("Data: " + cell.metadata.kbase.dataCell.objectInfo.name));
-                        var objectInfo = cell.metadata.kbase.dataCell.objectInfo;
-                        var type = {type: {module: objectInfo.typeModule, name: objectInfo.typeName}};
-    
-                        var typeInfo = runtime.getService('type').getIcon({"type":{"module":"KBaseGenomes", "name": "Genome"}});
                         var icon = document.createElement('div');
                         icon.style.fontSize = "3em";
-                        icon.innerHTML = typeInfo.html;
+
+                        if (cell.metadata.kbase.dataCell) {
+                            appDes.appendChild(textNode("Data: " + cell.metadata.kbase.dataCell.objectInfo.name));
+                            var objectInfo = cell.metadata.kbase.dataCell.objectInfo;
+                            var type = { type: { module: objectInfo.typeModule, name: objectInfo.typeName } };
+                            var typeInfo = runtime.getService('type').getIcon({ "type": { "module": "KBaseGenomes", "name": "Genome" } });
+                            icon.innerHTML = typeInfo.html;
+                        } else {
+                            appDes.appendChild(textNode("Unknown"));
+                            icon.setAttribute('class', 'fa fas fa-question fa-3x');
+                        }
+
                         appLogo.appendChild(icon);
 
                     } else if (cell.metadata.kbase.type === "app") {
