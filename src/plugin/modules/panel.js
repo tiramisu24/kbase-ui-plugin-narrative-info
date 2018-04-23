@@ -58,7 +58,7 @@ define([
             * created by the Panel for its own use (container),
             * and an array of subwidgets (children).
             */
-        var hostNode, container, appsLib,
+        var hostNode, container, appsLib = {},
             runtime = config.runtime,
             workspace = new GenericClient({
                 module: 'Workspace',
@@ -70,18 +70,19 @@ define([
         var rpc = RPC.make({
             runtime: runtime
         });
-        rpc.call('NarrativeMethodStore', 'list_methods', { tags: "tags" })
-                            .then((result) => {
-                                var appMap = {};
-                                result[0].forEach(function (app) {
-                                    appMap[app.id] = {
-                                        info: app
-                                    };
-                                });
-                                appsLib =  appMap;                            
-                            })
-                    
 
+        ["beta", "release", "dev"].forEach((tag) => {
+            rpc.call('NarrativeMethodStore', 'list_methods', { tag: tag })
+                .then((result) => {
+                    var appMap = {};
+                    result[0].forEach(function (app) {
+                        appMap[app.id] = {
+                            info: app
+                        };
+                    });
+                    appsLib[tag] = appMap;
+                });
+        })
 
         /* DOC helper functions
             * Although not part of the Panel Interface, a common pattern is
@@ -200,13 +201,9 @@ define([
             return null;
         }
         function makePopup(){
-            var wsName = this.dataset.wsName;
-            var wsId = this.dataset.wsId;
-            var narrativeName = this.dataset.narrativeName;
-            var narrativeNum = this.dataset.narrativeNum;
 
             Promise.all([workspace.callFunc('get_objects2',
-                [{ objects: [{ objid: narrativeNum, wsid: wsId }]}])])
+                [{ objects: [{ objid: this.dataset.narrativeNum, wsid: this.dataset.wsId }]}])])
                 .spread((res) => {
                     var popUpContainer = document.getElementById('popup-container');
                     popUpContainer.innerHTML = "";
@@ -216,7 +213,7 @@ define([
                     summarySection.setAttribute('id', 'summary-section')
 
                     var narrativeTitle = document.createElement('h2');
-                    narrativeTitle.textContent = narrativeName;
+                    narrativeTitle.textContent = this.dataset.narrativeName;
                     summarySection.appendChild(narrativeTitle);
 
                     var authorSection = document.createElement('div');
@@ -237,7 +234,7 @@ define([
 
                     var openNarrativeButton = document.createElement('a');
                     openNarrativeButton.textContent = "Open this Narrative";
-                    openNarrativeButton.href = "narrative/ws." + wsId + ".obj." + narrativeNum;
+                    openNarrativeButton.href = "narrative/ws." + this.dataset.wsId + ".obj." + this.dataset.narrativeNum;
                     openNarrativeButton.target = "_blank";
                     openNarrativeButton.setAttribute('class', "btn btn-primary");
                     openNarrativeButton.style.width = "300px";
@@ -268,13 +265,16 @@ define([
             data.forEach((cell) => {
                 var row = document.createElement('div'),
                     appLogo = document.createElement('div'),
-                    appDes = document.createElement('div');
+                    appDes = document.createElement('div'),
+                    runState = document.createElement('div');
 
                 row.setAttribute('class', 'data-cells');
-                appLogo.setAttribute('class', 'col-sm-3 center-items');
-                appDes.setAttribute('class', 'col-sm-9');
+                appLogo.setAttribute('class', 'col-sm-3 right-align');
+                appDes.setAttribute('class', 'col-sm-9 ellipsis');
+                runState.setAttribute('class', 'col-sm-2 right-align');
                 row.appendChild(appLogo);
                 row.appendChild(appDes);
+                row.appendChild(runState);
 
                 var appName, output;
 
@@ -286,7 +286,6 @@ define([
                     var defaultIcon = document.createElement('div');
                     defaultIcon.setAttribute('class', 'fa fa-paragraph fa-3x');
                     appLogo.appendChild(defaultIcon);
-                    appDes.setAttribute('class', 'col-sm-9 ellipsis');
                 //cell is an app
                 }else if(cell.metadata.kbase){
                     if (cell.metadata.kbase.type === "data"){
@@ -309,19 +308,25 @@ define([
                         appLogo.appendChild(icon);
 
                     } else if (cell.metadata.kbase.type === "app") {
+                        var appName;
                         var appKey = cell.metadata.kbase.appCell.app.id;
-                        var info = appsLib[appKey];
-                        if(info && info.info.icon){
+                        var tag = cell.metadata.kbase.appCell.app.tag;
+                        if(appKey){                            
+                            var info = appsLib[tag][appKey];
                             appName = info.info.name;
-                            var imageUrl = "https://ci.kbase.us/services/narrative_method_store/" +  info.info.icon.url;
-                            var customLogo = document.createElement('IMG');
-                            customLogo.src = imageUrl;
-                            appLogo.appendChild(customLogo);
+
+                            if(info.info.icon){
+                                var imageUrl = "https://ci.kbase.us/services/narrative_method_store/" +  info.info.icon.url;
+                                var customLogo = document.createElement('IMG');
+                                customLogo.src = imageUrl;
+                                appLogo.appendChild(customLogo);
+                            }else{
+                                var defaultIcon = document.createElement('div');                               
+                                defaultIcon.setAttribute('class', 'fa fas fa-terminal fa-3x');
+                                appLogo.appendChild(defaultIcon); 
+                            }
                         }else{
-                            appName = "Script";
-                            var defaultIcon = document.createElement('div');                               
-                            defaultIcon.setAttribute('class', 'fa fas fa-terminal fa-3x');
-                            appLogo.appendChild(defaultIcon); 
+                            appName = "Deprecated App";
                         }
 
                         appDes.appendChild(textNode(appName));
@@ -332,26 +337,19 @@ define([
                         Object.keys(params).forEach((key) => {
                             appDes.appendChild(textNode(key + ": " + params[key]))
                         })
-
-                        // var jobState = cell.metadata.kbase.appCell.exec.jobState.job_State;
-                        // output = "Job State is: " + jobState;
-                        // if(jobState === "finished"){
-                        //     //TODO show output objects better
-                        //     output += ". Output objects are: " + cell.metadata.kbase.appCell.exec.output.byJob
-                        // }
+                        var jobState = cell.metadata.kbase.appCell.fsm.currentState.mode;
+                        output = "Job State is: " + jobState;
+                        runState.appendChild(textNode(output));
+   
                     }
                 }else {
                     //cell is a script
-                    appName = "Script"
+                    appDes.appendChild(textNode("Custom Code"));
                     var defaultIcon = document.createElement('div');
                     defaultIcon.setAttribute('class', 'fa fas fa-terminal fa-3x');
                     appLogo.appendChild(defaultIcon); 
 
                 }
-
-
-                appDes.appendChild(textNode(appName))
-                // appDes.appendChild(textNode(output))
 
 
                 popUp.appendChild(row);
@@ -378,22 +376,21 @@ define([
             container.appendChild(narrativesContainer);
 
             //owners: ['dianez']
-            Promise.all([workspace.callFunc('list_workspace_info', [{ meta: {is_temporary: "false"}}])])
+            Promise.all([workspace.callFunc('list_workspace_info', [{ meta: { is_temporary: "false" }, owners: ['dianez']}])])
             .spread((res) => {
                 res[0].forEach((obj) => {
-                    if (obj[8] && obj[8].narrative){
-                    var node = document.createElement('div');
-                    node.setAttribute('data-ws-id', obj[0]);
-                    node.setAttribute('data-ws-name', obj[1]);
-                    node.setAttribute('data-author-name', obj[2]);
-                    node.setAttribute('data-created-date', obj[3]);
-                    node.setAttribute('data-narrative-name', obj[8].narrative_nice_name);
-                    node.setAttribute('data-narrative-num', obj[8].narrative);
-                    node.setAttribute('class', 'narrative_buttons');
-                    var narrative = document.createTextNode("Workspace with Narrative: " + obj[8].narrative_nice_name);
-                    node.appendChild(narrative);
-                    node.onclick = makePopup;
-                    narrativesContainer.appendChild(node)
+                    if (obj[8] && obj[8].narrative && obj[8].narrative_nice_name){
+                        var node = document.createElement('div');
+                        node.setAttribute('data-ws-id', obj[0]);
+                        node.setAttribute('data-author-name', obj[2]);
+                        node.setAttribute('data-created-date', obj[3]);
+                        node.setAttribute('data-narrative-name', obj[8].narrative_nice_name);
+                        node.setAttribute('data-narrative-num', obj[8].narrative);
+                        node.setAttribute('class', 'narrative_buttons');
+                        var narrative = document.createTextNode("Workspace with Narrative: " + obj[8].narrative_nice_name);
+                        node.appendChild(narrative);
+                        node.onclick = makePopup;
+                        narrativesContainer.appendChild(node);
                     }
                 })
             });
