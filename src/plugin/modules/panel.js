@@ -203,13 +203,14 @@ define([
             var wsName = this.dataset.wsName;
             var wsId = this.dataset.wsId;
             var narrativeName = this.dataset.narrativeName;
-            //narrative names
+
             Promise.all([workspace.callFunc('list_objects', 
                         [{ workspaces: [wsName], ids: [wsId] }])])
                 .spread((objs) => {
-                    //assuming that the narrative is the first object
-                    //TODO check that it is 
-                    var objectId = objs[0][0][6] + "/" + objs[0][0][0] + "/" + objs[0][0][4];
+                    //obj ordering start at 1
+                    var objNum = Number(this.dataset.narrativeNum) - 1 ;
+                    console.log(objNum);
+                    var objectId = objs[0][objNum][6] + "/" + objs[0][objNum][0] + "/" + objs[0][objNum][4];
                     Promise.all([workspace.callFunc('get_objects2',
                         [{ objects: [{ref: objectId}]}])])
                         .spread((res) => {
@@ -230,10 +231,15 @@ define([
                             summarySection.appendChild(authorSection);
 
                             popUpContainer.appendChild(summarySection);
-
                             //rows of apps
-                            var detailsSection = makeDetails(res[0].data[0].data.cells);
-                            popUpContainer.appendChild(detailsSection);
+                            if (res[0].data[0].data.cells){
+                                var detailsSection = makeDetails(res[0].data[0].data.cells);
+                                popUpContainer.appendChild(detailsSection);
+                            } else if (res[0].data[0].data.worksheets[0].cells){
+                                //old narratives
+                                var detailsSection = makeDetails(res[0].data[0].data.worksheets[0].cells);
+                                popUpContainer.appendChild(detailsSection);                                
+                            }
                           
 
                             var openNarrativeButton = document.createElement('a');
@@ -251,6 +257,8 @@ define([
 
                         })
                 })
+        
+            
         }
 
         function makeDetails(data){
@@ -292,9 +300,9 @@ define([
                 //cell is an app
                 }else if(cell.metadata.kbase){
                     if (cell.metadata.kbase.type === "data"){
+
                         appDes.appendChild(textNode("Data Cell"));
                         appDes.appendChild(textNode("Data: " + cell.metadata.kbase.dataCell.objectInfo.name));
-
                         var objectInfo = cell.metadata.kbase.dataCell.objectInfo;
                         var type = {type: {module: objectInfo.typeModule, name: objectInfo.typeName}};
     
@@ -307,7 +315,6 @@ define([
                     } else if (cell.metadata.kbase.type === "app") {
                         var appKey = cell.metadata.kbase.appCell.app.id;
                         var info = appsLib[appKey];
-                        // debugger;
                         if(info && info.info.icon){
                             appName = info.info.name;
                             var imageUrl = "https://ci.kbase.us/services/narrative_method_store/" +  info.info.icon.url;
@@ -374,19 +381,18 @@ define([
             narrativesContainer.setAttribute('class', 'col-sm-4');
             container.appendChild(narrativesContainer);
 
-            Promise.all([workspace.callFunc('list_workspace_info', [{owners: ['eapearson']}])])
+            //owners: ['dianez']
+            Promise.all([workspace.callFunc('list_workspace_info', [{ meta: {is_temporary: "false"}}])])
             .spread((res) => {
                 res[0].forEach((obj) => {
-                    if (obj[8] && obj[8].narrative_nice_name){
-
-
+                    if (obj[8] && obj[8].narrative){
                     var node = document.createElement('div');
                     node.setAttribute('data-ws-id', obj[0]);
                     node.setAttribute('data-ws-name', obj[1]);
                     node.setAttribute('data-author-name', obj[2]);
                     node.setAttribute('data-created-date', obj[3]);
                     node.setAttribute('data-narrative-name', obj[8].narrative_nice_name);
-
+                    node.setAttribute('data-narrative-num', obj[8].narrative);
                     node.setAttribute('class', 'narrative_buttons');
                     var narrative = document.createTextNode("Workspace with Narrative: " + obj[8].narrative_nice_name);
                     node.appendChild(narrative);
