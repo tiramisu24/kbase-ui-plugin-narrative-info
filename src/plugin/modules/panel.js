@@ -263,6 +263,7 @@ define([
             popUp.setAttribute('id', 'details-section');
 
             data.forEach((cell) => {
+
                 var row = document.createElement('div'),
                     appLogo = document.createElement('div'),
                     appDes = document.createElement('div'),
@@ -272,92 +273,91 @@ define([
                 appLogo.setAttribute('class', 'col-sm-2 right-align');
                 appDes.setAttribute('class', 'col-sm-9 ellipsis');
                 runState.setAttribute('class', 'col-sm-2 right-align');
+
                 row.appendChild(appLogo);
                 row.appendChild(appDes);
                 row.appendChild(runState);
 
-                var appName, output;
-
-                //cell is markdown
                 if(cell.cell_type === "markdown"){
                     appDes.appendChild(textNode("Markdown"));
                     appDes.appendChild(textNode(cell.source));
 
                     var defaultIcon = document.createElement('div');
-                    defaultIcon.setAttribute('class', 'fa fa-paragraph fa-3x');
+                    defaultIcon.setAttribute('class', 'fa fa-paragraph ');
+                    defaultIcon.style.fontSize = "3em";
                     appLogo.appendChild(defaultIcon);
-                //cell is an app
-                }else if(cell.metadata.kbase){
-                    if (cell.metadata.kbase.type === "data"){
-                        // debugger;
-                        appDes.appendChild(textNode("Data Cell"));
-                        var icon = document.createElement('div');
-                        icon.style.fontSize = "3em";
 
-                        if (cell.metadata.kbase.dataCell) {
-                            appDes.appendChild(textNode("Data: " + cell.metadata.kbase.dataCell.objectInfo.name));
-                            var objectInfo = cell.metadata.kbase.dataCell.objectInfo;
-                            var type = { type: { module: objectInfo.typeModule, name: objectInfo.typeName } };
-                            var typeInfo = runtime.getService('type').getIcon({ "type": { "module": "KBaseGenomes", "name": "Genome" } });
-                            icon.innerHTML = typeInfo.html;
-                        } else {
-                            appDes.appendChild(textNode("Unknown"));
-                            icon.setAttribute('class', 'fa fas fa-question fa-3x');
-                        }
+                }else if(cell.cell_type === "code"){
+                    if(cell.metadata.kbase){
+                        if (cell.metadata.kbase.type === "data"){
+                            appDes.appendChild(textNode("Data Cell"));
+                            var icon = document.createElement('div');
+                            icon.style.fontSize = "3em";
 
-                        appLogo.appendChild(icon);
-
-                    } else if (cell.metadata.kbase.type === "app") {
-                        var appName;
-                        var appKey = cell.metadata.kbase.appCell.app.id;
-                        var tag = cell.metadata.kbase.appCell.app.tag;
-                        if(appKey){                            
-                            var info = appsLib[tag][appKey];
-                            appName = info.info.name;
-
-                            if(info.info.icon){
-                                var imageUrl = "https://ci.kbase.us/services/narrative_method_store/" +  info.info.icon.url;
-                                var customLogo = document.createElement('IMG');
-                                customLogo.src = imageUrl;
-                                appLogo.appendChild(customLogo);
-                            }else{
-                                var defaultIcon = document.createElement('div');                               
-                                defaultIcon.setAttribute('class', 'fa fas fa-terminal fa-3x');
-                                appLogo.appendChild(defaultIcon); 
+                            if (cell.metadata.kbase.dataCell) {
+                                appDes.appendChild(textNode("Data: " + cell.metadata.kbase.dataCell.objectInfo.name));
+                                var objectInfo = cell.metadata.kbase.dataCell.objectInfo;
+                                var type = { type: { module: objectInfo.typeModule, name: objectInfo.typeName } };
+                                var typeInfo = runtime.getService('type').getIcon({ "type": { "module": "KBaseGenomes", "name": "Genome" } });
+                                icon.innerHTML = typeInfo.html;
+                            } else {
+                                appDes.appendChild(textNode("Unknown"));
+                                icon.setAttribute('class', 'fa fas fa-question fa-3x');
                             }
-                        }else{
-                            appName = "Deprecated App";
+                            appLogo.appendChild(icon);
+
+                        } else if (cell.metadata.kbase.type === "app") {
+                            var appName;
+                            var appKey = cell.metadata.kbase.appCell.app.id;
+                            var tag = cell.metadata.kbase.appCell.app.tag;
+                            if(appKey){                            
+                                var info = appsLib[tag][appKey];
+                                appName = info.info.name;
+
+                                if(info.info.icon){
+                                    var imageUrl = "https://ci.kbase.us/services/narrative_method_store/" +  info.info.icon.url;
+                                    var customLogo = document.createElement('IMG');
+                                    customLogo.src = imageUrl;
+                                    appLogo.appendChild(customLogo);
+                                }else{
+                                    var defaultIcon = document.createElement('div');                               
+                                    defaultIcon.setAttribute('class', 'fa fas fa-terminal fa-3x');
+                                    appLogo.appendChild(defaultIcon); 
+                                }
+                            }else{
+                                appName = "Deprecated App";
+                            }
+
+                            appDes.appendChild(textNode(appName));
+                            var params = cell.metadata.kbase.appCell.params;
+                            var output = "Input: ";
+                            appDes.appendChild(textNode(output))
+
+                            Object.keys(params).forEach((key) => {
+                                appDes.appendChild(textNode(key + ": " + params[key]))
+                            })
+                            var jobState = cell.metadata.kbase.appCell.fsm.currentState.mode;
+                            output = "Job State is: " + jobState;
+                            runState.appendChild(appStateIcons(jobState));
+    
+                        } else {
+                            //cell is a script
+                            appDes.appendChild(textNode("Custom Code"));
+                            var defaultIcon = document.createElement('div');
+                            defaultIcon.setAttribute('class', 'fa fas fa-terminal fa-3x');
+                            appLogo.appendChild(defaultIcon);
                         }
-
-                        appDes.appendChild(textNode(appName));
-                        var params = cell.metadata.kbase.appCell.params;
-                        output = "Input: ";
-                        appDes.appendChild(textNode(output))
-
-                        Object.keys(params).forEach((key) => {
-                            appDes.appendChild(textNode(key + ": " + params[key]))
-                        })
-                        var jobState = cell.metadata.kbase.appCell.fsm.currentState.mode;
-                        output = "Job State is: " + jobState;
-                        // runState.appendChild(textNode(output));'
-                        runState.appendChild(appStateIcons(jobState));
-   
-                    }
-                }else {
-                    //cell is a script
-                    appDes.appendChild(textNode("Custom Code"));
-                    var defaultIcon = document.createElement('div');
-                    defaultIcon.setAttribute('class', 'fa fas fa-terminal fa-3x');
-                    appLogo.appendChild(defaultIcon); 
-                    runState.appendChild(appStateIcons("emergency"));
-
-
+                    }else {
+                        //cell is a script
+                        appDes.appendChild(textNode("Dinosaur Code"));
+                        var defaultIcon = document.createElement('div');
+                        defaultIcon.setAttribute('class', 'fa fas fa-archive fa-3x');
+                        appLogo.appendChild(defaultIcon); 
+                        runState.appendChild(appStateIcons("emergency"));
                 }
-
-
+            }
                 popUp.appendChild(row);
             })
-
             return popUp;
         }
 
@@ -404,8 +404,7 @@ define([
             narrativesContainer.setAttribute('class', 'col-sm-4');
             container.appendChild(narrativesContainer);
 
-            //owners: ['dianez']
-            Promise.all([workspace.callFunc('list_workspace_info', [{ meta: { is_temporary: "false" }, owners: ['dianez']}])])
+            Promise.all([workspace.callFunc('list_workspace_info', [{ meta: { is_temporary: "false" }}])])
             .spread((res) => {
                 res[0].forEach((obj) => {
                     if (obj[8] && obj[8].narrative && obj[8].narrative_nice_name){
