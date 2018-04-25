@@ -307,9 +307,21 @@ define([
                             appLogo.appendChild(icon);
 
                         } else if (cell.metadata.kbase.type === "app") {
+
                             var appName;
                             var appKey = cell.metadata.kbase.appCell.app.id;
                             var tag = cell.metadata.kbase.appCell.app.tag;
+                            if (cell.metadata.kbase.appCell.exec){
+                                if ( cell.metadata.kbase.appCell.exec.jobState){
+
+                                    if(cell.metadata.kbase.appCell.exec.jobState.result){
+                                        console.log("reports object is"+cell.metadata.kbase.appCell.exec.jobState.result[0]);
+                                    }
+                                }else{
+                                    //old apps skip
+                                    debugger;
+                                }
+                            }
                             if(appKey){                            
                                 var info = appsLib[tag][appKey];
                                 appName = info.info.name;
@@ -332,9 +344,25 @@ define([
                             var params = cell.metadata.kbase.appCell.params;
                             var output = "Input: ";
                             appDes.appendChild(textNode(output))
+                            var regex = RegExp('^\\d+(/\\d+)+$');
 
                             Object.keys(params).forEach((key) => {
-                                appDes.appendChild(textNode(key + ": " + params[key]))
+                                var isWsObject = true;
+                                var value = params[key];
+
+                                if (typeof value === 'string' || value instanceof String){
+                                    // debugger;
+                                    value.split(";").forEach((seg) => {
+                                        if(!regex.test(seg)){
+                                            isWsObject = false;
+                                        }
+                                    })
+                                }else{
+                                    isWsObject = false;
+                                }
+                                if(isWsObject){
+                                    appDes.appendChild(textNode(key + ": " + value))
+                                }
                             })
                             var jobState = cell.metadata.kbase.appCell.fsm.currentState.mode;
                             output = "Job State is: " + jobState;
@@ -403,8 +431,8 @@ define([
             narrativesContainer.setAttribute('id', 'narratives-container');
             narrativesContainer.setAttribute('class', 'col-sm-4');
             container.appendChild(narrativesContainer);
-
-            Promise.all([workspace.callFunc('list_workspace_info', [{ meta: { is_temporary: "false" }}])])
+ //owners: ['dianez']
+            Promise.all([workspace.callFunc('list_workspace_info', [{ meta: { is_temporary: "false" }, owners: ['dianez']}])])
             .spread((res) => {
                 res[0].forEach((obj) => {
                     if (obj[8] && obj[8].narrative && obj[8].narrative_nice_name){
