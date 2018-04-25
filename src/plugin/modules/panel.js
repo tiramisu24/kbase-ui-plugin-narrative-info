@@ -299,33 +299,11 @@ define([
                             var appName;
                             var appKey = cell.metadata.kbase.appCell.app.id;
                             var tag = cell.metadata.kbase.appCell.app.tag;
-                            if (cell.metadata.kbase.appCell.exec){
-                                if ( cell.metadata.kbase.appCell.exec.jobState){
 
-                                    if(cell.metadata.kbase.appCell.exec.jobState.result){
-                                        appDes.appendChild(textNode("output is: " + cell.metadata.kbase.appCell.exec.jobState.result[0]));
-                                        console.log("reports object is"+cell.metadata.kbase.appCell.exec.jobState.result[0]);
-                                    }
-                                }else{
-                                    //old apps skip
-                                    debugger;
-                                }
-                            }
                             if(appKey){                            
                                 var info = appsLib[tag][appKey];
                                 appName = info.info.name;
-                                // debugger;
                                 appLogo.appendChild(getDisplayIcons("app", info.info));
-                                // if(info.info.icon){
-                                //     var imageUrl = "https://ci.kbase.us/services/narrative_method_store/" +  info.info.icon.url;
-                                //     var customLogo = document.createElement('IMG');
-                                //     customLogo.src = imageUrl;
-                                //     appLogo.appendChild(customLogo);
-                                // }else{
-                                //     var defaultIcon = document.createElement('div');                               
-                                //     defaultIcon.setAttribute('class', 'fa fas fa-terminal fa-3x');
-                                //     appLogo.appendChild(defaultIcon); 
-                                // }
                             }else{
                                 appName = "Dinosaur Code";
                                 appLogo.appendChild(getDisplayIcons("emergency")); 
@@ -355,6 +333,11 @@ define([
                                     appDes.appendChild(textNode(key + ": " + value))
                                 }
                             })
+                            // debugger;
+                            var appOutputs = renderAppOutputs(cell.metadata.kbase.appCell.exec)
+                            if(appOutputs) {
+                                appDes.appendChild(appOutputs);
+                            }
                             var jobState = cell.metadata.kbase.appCell.fsm.currentState.mode;
                             output = "Job State is: " + jobState;
                             runState.appendChild(appStateIcons(jobState));
@@ -375,6 +358,48 @@ define([
             })
             return popUp;
         }
+        function renderAppInputs(){
+
+        }
+        function renderAppOutputs(exec){
+            var output;
+            if (exec) {
+                if (exec.jobState) {
+                    // debugger;
+                    //first one for now
+                    if (exec.jobState.result && exec.jobState.result[0].report_ref) {
+                        // debugger;
+                        var refId = exec.jobState.result[0].report_ref;
+                        output = document.createElement('div');
+                        Promise.all([workspace.callFunc('get_objects2',
+                            [{ objects: [{ ref: refId }] }])])
+                            .spread((res) => {
+                                var result = res[0].data[0].data.objects_created;
+                                result.forEach((obj) => {
+                                    output.appendChild(textNode(
+                                        "outputs are: " + obj.ref + " description is : " + obj.description
+                                    ))
+                                })
+                                // debugger;
+                            });
+
+                        // output = textNode("output is: " + exec.jobState.result[0].report_ref);
+
+                        // debugger;
+                        // console.log("reports object is" + exec.jobState.result[0]);
+                    }
+                } else {
+                    //old apps skip
+                    debugger;
+                }
+            }
+            return output;
+        }
+
+        function getAppOutputs(){
+
+        }
+        
         function getDisplayIcons(state, info){
             var icon = document.createElement('div');
             icon.style.fontSize = "3em";
@@ -387,12 +412,13 @@ define([
             }
             //apps or code that does not have standard fields
             if (state === "emergency"){
-                defaultIcon.setAttribute('class', 'fa fas fa-archive fa-3x');
+                icon.setAttribute('class', 'fa fas fa-archive fa-3x');
             }
             //app
             if(state === "app"){
                 if (info.icon) {
-                    var imageUrl = "https://ci.kbase.us/services/narrative_method_store/" + info.icon.url;
+                    //TODO: need to get env from runtime. For now hardcoded
+                    var imageUrl = "https://kbase.us/services/narrative_method_store/" + info.icon.url;
                     var customLogo = document.createElement('IMG');
                     customLogo.src = imageUrl;
                     icon.appendChild(customLogo);
@@ -412,7 +438,6 @@ define([
                     icon.setAttribute('class', 'fa fas fa-cube fa-3x');
                 }
             }
-
             return icon;
         }
 
@@ -459,7 +484,7 @@ define([
             narrativesContainer.setAttribute('class', 'col-sm-4');
             container.appendChild(narrativesContainer);
  //owners: ['dianez']
-            Promise.all([workspace.callFunc('list_workspace_info', [{ meta: { is_temporary: "false" }, owners: ['dianez']}])])
+            Promise.all([workspace.callFunc('list_workspace_info', [{ meta: { is_temporary: "false" }}])])
             .spread((res) => {
                 res[0].forEach((obj) => {
                     if (obj[8] && obj[8].narrative && obj[8].narrative_nice_name){
