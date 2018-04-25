@@ -201,7 +201,7 @@ define([
             return null;
         }
         function makePopup(){
-
+            try{
             Promise.all([workspace.callFunc('get_objects2',
                 [{ objects: [{ objid: this.dataset.narrativeNum, wsid: this.dataset.wsId }]}])])
                 .spread((res) => {
@@ -245,6 +245,9 @@ define([
 
                     popUpContainer.appendChild(buttonWrapper);
                 });
+            }catch(er){
+                //obj has been deleted
+            }
             
         }
 
@@ -311,34 +314,38 @@ define([
 
                             appDes.appendChild(textNode(appName));
                             var params = cell.metadata.kbase.appCell.params;
-                            var output = "Input: ";
-                            appDes.appendChild(textNode(output))
-                            var regex = RegExp('^\\d+(/\\d+)+$');
+                            var appInputs = renderAppInputs(params);
+                            if(appInputs){
+                                appDes.appendChild(appInputs);
+                            }
+                            // var output = "Input: ";
+                            // appDes.appendChild(textNode(output))
+                            // var regex = RegExp('^\\d+(/\\d+)+$');
 
-                            Object.keys(params).forEach((key) => {
-                                var isWsObject = true;
-                                var value = params[key];
+                            // Object.keys(params).forEach((key) => {
+                            //     var isWsObject = true;
+                            //     var value = params[key];
 
-                                if (typeof value === 'string' || value instanceof String){
-                                    // debugger;
-                                    value.split(";").forEach((seg) => {
-                                        if(!regex.test(seg)){
-                                            isWsObject = false;
-                                        }
-                                    })
-                                }else{
-                                    isWsObject = false;
-                                }
-                                if(isWsObject){
-                                    appDes.appendChild(textNode(key + ": " + value))
-                                }
-                            })
+                            //     if (typeof value === 'string' || value instanceof String){
+                            //         // debugger;
+                            //         value.split(";").forEach((seg) => {
+                            //             if(!regex.test(seg)){
+                            //                 isWsObject = false;
+                            //             }
+                            //         })
+                            //     }else{
+                            //         isWsObject = false;
+                            //     }
+                            //     if(isWsObject){
+                            //         appDes.appendChild(textNode(key + ": " + value))
+                            //     }
+                            // })
+
                             var appOutputs = renderAppOutputs(cell.metadata.kbase.appCell.exec)
                             if(appOutputs) {
                                 appDes.appendChild(appOutputs);
                             }
                             var jobState = cell.metadata.kbase.appCell.fsm.currentState.mode;
-                            output = "Job State is: " + jobState;
                             runState.appendChild(appStateIcons(jobState));
     
                         } else {
@@ -357,7 +364,38 @@ define([
             })
             return popUp;
         }
-        function renderAppInputs(){
+        function renderAppInputs(params){
+            var input;
+            // appDes.appendChild(textNode(input))
+            var regex = RegExp('^\\d+(/\\d+)+$');
+
+            Object.keys(params).forEach((key) => {
+                var isWsObject = true;
+                var value = params[key];
+
+                if (typeof value === 'string' || value instanceof String) {
+                    // debugger;
+                    value.split(";").forEach((seg) => {
+                        if (!regex.test(seg)) {
+                            isWsObject = false;
+                        }else{
+                            //TODO: remove, here just to check that regex is working
+                            console.log(seg);
+                        }
+                    })
+                } else {
+                    isWsObject = false;
+                }
+                if (isWsObject) {
+                    input = textNode(key + ": " + value);
+                }else{
+                    input = textNode("no inputs");
+                }
+            })
+            return input;
+        }
+
+        function attachAppInputs(){
 
         }
         function renderAppOutputs(exec){
@@ -396,25 +434,6 @@ define([
                     obj.ref + " description is : " + obj.description))
                 }
             }))
-            // results.forEach((obj) => {
-            //     var objName = await workspace.callFunc('get_objects2', [{ objects: [{ ref: obj.ref }] }])
-            //     output.appendChild(textNode(
-                
-            //         "outputs are: " + obj.ref + " description is : " + obj.description
-            //     ))
-            // })
-            // debugger;
-            // Promise.all([workspace.callFunc('get_objects2',
-            //     [{ objects: [{ ref: refId }] }])])
-            //     .spread((res) => {
-            //         var result = res[0].data[0].data.objects_created;
-            //         result.forEach((obj) => {
-            //             output.appendChild(textNode(
-            //                 "outputs are: " + obj.ref + " description is : " + obj.description
-            //             ))
-            //         })
-            //         // debugger;
-            //     });
         }
 
         function getDisplayIcons(state, info){
@@ -501,7 +520,7 @@ define([
             narrativesContainer.setAttribute('class', 'col-sm-4');
             container.appendChild(narrativesContainer);
  //owners: ['dianez']
-            Promise.all([workspace.callFunc('list_workspace_info', [{ meta: { is_temporary: "false" }, owners: ['dianez']}])])
+            Promise.all([workspace.callFunc('list_workspace_info', [{ meta: { is_temporary: "false" }}])])
             .spread((res) => {
                 res[0].forEach((obj) => {
                     if (obj[8] && obj[8].narrative && obj[8].narrative_nice_name){
@@ -512,7 +531,8 @@ define([
                         node.setAttribute('data-narrative-name', obj[8].narrative_nice_name);
                         node.setAttribute('data-narrative-num', obj[8].narrative);
                         node.setAttribute('class', 'narrative_buttons');
-                        var narrative = document.createTextNode("Workspace with Narrative: " + obj[8].narrative_nice_name);
+                        var narrative = document.createTextNode("Workspace with Narrative: " + obj[8].narrative_nice_name
+                        + " with wsId: " + obj[0]);
                         node.appendChild(narrative);
                         node.onclick = makePopup;
                         narrativesContainer.appendChild(node);
