@@ -333,7 +333,6 @@ define([
                                     appDes.appendChild(textNode(key + ": " + value))
                                 }
                             })
-                            // debugger;
                             var appOutputs = renderAppOutputs(cell.metadata.kbase.appCell.exec)
                             if(appOutputs) {
                                 appDes.appendChild(appOutputs);
@@ -365,28 +364,12 @@ define([
             var output;
             if (exec) {
                 if (exec.jobState) {
-                    // debugger;
                     //first one for now
                     if (exec.jobState.result && exec.jobState.result[0].report_ref) {
-                        // debugger;
                         var refId = exec.jobState.result[0].report_ref;
                         output = document.createElement('div');
-                        Promise.all([workspace.callFunc('get_objects2',
-                            [{ objects: [{ ref: refId }] }])])
-                            .spread((res) => {
-                                var result = res[0].data[0].data.objects_created;
-                                result.forEach((obj) => {
-                                    output.appendChild(textNode(
-                                        "outputs are: " + obj.ref + " description is : " + obj.description
-                                    ))
-                                })
-                                // debugger;
-                            });
-
-                        // output = textNode("output is: " + exec.jobState.result[0].report_ref);
-
-                        // debugger;
-                        // console.log("reports object is" + exec.jobState.result[0]);
+                       
+                        var res = attachAppOutputs(refId, output);
                     }
                 } else {
                     //old apps skip
@@ -396,10 +379,44 @@ define([
             return output;
         }
 
-        function getAppOutputs(){
+        async function attachAppOutputs(refId, output){
+            var returnedValue = await workspace.callFunc('get_objects2', [{ objects: [{ ref: refId }] }]);
+            var results = returnedValue[0].data[0].data.objects_created;
+            var names = await Promise.all(results.map(async (obj) => {
+                var objName;
+                try{
+                    objName = await workspace.callFunc('get_objects2', [{ objects: [{ ref: obj.ref }] }]);
+                }catch (er){
+                    //usually obj has been deleted
+                    output.appendChild(textNode("outputs are probably deleted" ))
 
+                }
+                if(objName){
+                    output.appendChild(textNode("outputs are: " + objName + " with obj id: " + 
+                    obj.ref + " description is : " + obj.description))
+                }
+            }))
+            // results.forEach((obj) => {
+            //     var objName = await workspace.callFunc('get_objects2', [{ objects: [{ ref: obj.ref }] }])
+            //     output.appendChild(textNode(
+                
+            //         "outputs are: " + obj.ref + " description is : " + obj.description
+            //     ))
+            // })
+            // debugger;
+            // Promise.all([workspace.callFunc('get_objects2',
+            //     [{ objects: [{ ref: refId }] }])])
+            //     .spread((res) => {
+            //         var result = res[0].data[0].data.objects_created;
+            //         result.forEach((obj) => {
+            //             output.appendChild(textNode(
+            //                 "outputs are: " + obj.ref + " description is : " + obj.description
+            //             ))
+            //         })
+            //         // debugger;
+            //     });
         }
-        
+
         function getDisplayIcons(state, info){
             var icon = document.createElement('div');
             icon.style.fontSize = "3em";
@@ -484,7 +501,7 @@ define([
             narrativesContainer.setAttribute('class', 'col-sm-4');
             container.appendChild(narrativesContainer);
  //owners: ['dianez']
-            Promise.all([workspace.callFunc('list_workspace_info', [{ meta: { is_temporary: "false" }}])])
+            Promise.all([workspace.callFunc('list_workspace_info', [{ meta: { is_temporary: "false" }, owners: ['dianez']}])])
             .spread((res) => {
                 res[0].forEach((obj) => {
                     if (obj[8] && obj[8].narrative && obj[8].narrative_nice_name){
