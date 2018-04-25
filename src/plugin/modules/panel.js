@@ -281,30 +281,18 @@ define([
                 if(cell.cell_type === "markdown"){
                     appDes.appendChild(textNode("Markdown"));
                     appDes.appendChild(textNode(cell.source));
-
-                    var defaultIcon = document.createElement('div');
-                    defaultIcon.setAttribute('class', 'fa fa-paragraph ');
-                    defaultIcon.style.fontSize = "3em";
-                    appLogo.appendChild(defaultIcon);
+                    appLogo.appendChild(getDisplayIcons("markdown"));
 
                 }else if(cell.cell_type === "code"){
                     if(cell.metadata.kbase){
                         if (cell.metadata.kbase.type === "data"){
                             appDes.appendChild(textNode("Data Cell"));
-                            var icon = document.createElement('div');
-                            icon.style.fontSize = "3em";
-
                             if (cell.metadata.kbase.dataCell) {
                                 appDes.appendChild(textNode("Data: " + cell.metadata.kbase.dataCell.objectInfo.name));
-                                var objectInfo = cell.metadata.kbase.dataCell.objectInfo;
-                                var type = { type: { module: objectInfo.typeModule, name: objectInfo.typeName } };
-                                var typeInfo = runtime.getService('type').getIcon({ "type": { "module": "KBaseGenomes", "name": "Genome" } });
-                                icon.innerHTML = typeInfo.html;
                             } else {
                                 appDes.appendChild(textNode("Unknown"));
-                                icon.setAttribute('class', 'fa fas fa-question fa-3x');
                             }
-                            appLogo.appendChild(icon);
+                            appLogo.appendChild(getDisplayIcons("data", cell.metadata.kbase.dataCell));
 
                         } else if (cell.metadata.kbase.type === "app") {
 
@@ -315,6 +303,7 @@ define([
                                 if ( cell.metadata.kbase.appCell.exec.jobState){
 
                                     if(cell.metadata.kbase.appCell.exec.jobState.result){
+                                        appDes.appendChild(textNode("output is: " + cell.metadata.kbase.appCell.exec.jobState.result[0]));
                                         console.log("reports object is"+cell.metadata.kbase.appCell.exec.jobState.result[0]);
                                     }
                                 }else{
@@ -325,19 +314,21 @@ define([
                             if(appKey){                            
                                 var info = appsLib[tag][appKey];
                                 appName = info.info.name;
-
-                                if(info.info.icon){
-                                    var imageUrl = "https://ci.kbase.us/services/narrative_method_store/" +  info.info.icon.url;
-                                    var customLogo = document.createElement('IMG');
-                                    customLogo.src = imageUrl;
-                                    appLogo.appendChild(customLogo);
-                                }else{
-                                    var defaultIcon = document.createElement('div');                               
-                                    defaultIcon.setAttribute('class', 'fa fas fa-terminal fa-3x');
-                                    appLogo.appendChild(defaultIcon); 
-                                }
+                                // debugger;
+                                appLogo.appendChild(getDisplayIcons("app", info.info));
+                                // if(info.info.icon){
+                                //     var imageUrl = "https://ci.kbase.us/services/narrative_method_store/" +  info.info.icon.url;
+                                //     var customLogo = document.createElement('IMG');
+                                //     customLogo.src = imageUrl;
+                                //     appLogo.appendChild(customLogo);
+                                // }else{
+                                //     var defaultIcon = document.createElement('div');                               
+                                //     defaultIcon.setAttribute('class', 'fa fas fa-terminal fa-3x');
+                                //     appLogo.appendChild(defaultIcon); 
+                                // }
                             }else{
-                                appName = "Deprecated App";
+                                appName = "Dinosaur Code";
+                                appLogo.appendChild(getDisplayIcons("emergency")); 
                             }
 
                             appDes.appendChild(textNode(appName));
@@ -371,16 +362,12 @@ define([
                         } else {
                             //cell is a script
                             appDes.appendChild(textNode("Custom Code"));
-                            var defaultIcon = document.createElement('div');
-                            defaultIcon.setAttribute('class', 'fa fas fa-terminal fa-3x');
-                            appLogo.appendChild(defaultIcon);
+                            appLogo.appendChild(getDisplayIcons("custom"));
                         }
                     }else {
                         //cell is a script
                         appDes.appendChild(textNode("Dinosaur Code"));
-                        var defaultIcon = document.createElement('div');
-                        defaultIcon.setAttribute('class', 'fa fas fa-archive fa-3x');
-                        appLogo.appendChild(defaultIcon); 
+                        appLogo.appendChild(getDisplayIcons("emergency")); 
                         runState.appendChild(appStateIcons("emergency"));
                 }
             }
@@ -388,29 +375,69 @@ define([
             })
             return popUp;
         }
+        function getDisplayIcons(state, info){
+            var icon = document.createElement('div');
+            icon.style.fontSize = "3em";
+            if(state === "markdown"){
+                icon.setAttribute('class', 'fa fa-paragraph ');
+            }
+            //custom code
+            if (state === "custom") {
+                icon.setAttribute('class', 'fa fas fa-archive fa-3x');
+            }
+            //apps or code that does not have standard fields
+            if (state === "emergency"){
+                defaultIcon.setAttribute('class', 'fa fas fa-archive fa-3x');
+            }
+            //app
+            if(state === "app"){
+                if (info.icon) {
+                    var imageUrl = "https://ci.kbase.us/services/narrative_method_store/" + info.icon.url;
+                    var customLogo = document.createElement('IMG');
+                    customLogo.src = imageUrl;
+                    icon.appendChild(customLogo);
+                } else {
+                    icon.setAttribute('class', 'fa fas fa-terminal fa-3x');
+                }
+            }
+            //data cells
+            if(state === "data"){
+                if (info && info.objectInfo && info.objectInfo.typeModule && info.objectInfo.typeName) {
+                    var objectInfo = info.objectInfo;
+                    //{ "type": { "module": "KBaseGenomes", "name": "Genome" } }
+                    var type = { "type": { module: objectInfo.typeModule, "name": objectInfo.typeName } };
+                    var typeInfo = runtime.getService('type').getIcon(type);
+                    icon.innerHTML = typeInfo.html;
+                } else {
+                    icon.setAttribute('class', 'fa fas fa-cube fa-3x');
+                }
+            }
+
+            return icon;
+        }
 
         function appStateIcons(state){
             var stateIcon = document.createElement('div');
             stateIcon.style.fontSize = "3em";
 
+            //app finished
             if(state === "success"){
                 stateIcon.setAttribute('class', 'fa fas fa-check-circle');
-                //app finished
+            
+            //app finished with error
             }else if (state === "error"){
                 stateIcon.setAttribute('class', 'fa fas fa-exclamation-circle');
 
-                //app finished with error
+            //app canceled
             }else if (state === "canceled"){
                 stateIcon.setAttribute('class', 'fa fas fa-times');
-
-                //app canceled
+            
+            //really old apps
             }else if (state === "emergency" ) {
                 stateIcon.setAttribute('class', 'fa fas fa-ambulance');
-
+            //app is running
             }else {
                 stateIcon.setAttribute('class', 'fa fas fa-spinner');
-
-                //app is running
             }
             return stateIcon;
         }
