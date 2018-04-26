@@ -318,28 +318,6 @@ define([
                             if(appInputs){
                                 appDes.appendChild(appInputs);
                             }
-                            // var output = "Input: ";
-                            // appDes.appendChild(textNode(output))
-                            // var regex = RegExp('^\\d+(/\\d+)+$');
-
-                            // Object.keys(params).forEach((key) => {
-                            //     var isWsObject = true;
-                            //     var value = params[key];
-
-                            //     if (typeof value === 'string' || value instanceof String){
-                            //         // debugger;
-                            //         value.split(";").forEach((seg) => {
-                            //             if(!regex.test(seg)){
-                            //                 isWsObject = false;
-                            //             }
-                            //         })
-                            //     }else{
-                            //         isWsObject = false;
-                            //     }
-                            //     if(isWsObject){
-                            //         appDes.appendChild(textNode(key + ": " + value))
-                            //     }
-                            // })
 
                             var appOutputs = renderAppOutputs(cell.metadata.kbase.appCell.exec)
                             if(appOutputs) {
@@ -423,7 +401,9 @@ define([
             var names = await Promise.all(results.map(async (obj) => {
                 var objName;
                 try{
-                    objName = await workspace.callFunc('get_objects2', [{ objects: [{ ref: obj.ref }] }]);
+                    var objInfo = await workspace.callFunc('get_object_info3', [{ objects: [{ ref: obj.ref }] }]);
+                    objName = objInfo[0].infos[0][1];
+                    // debugger;
                 }catch (er){
                     //usually obj has been deleted
                     output.appendChild(textNode("outputs are probably deleted" ))
