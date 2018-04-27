@@ -201,10 +201,10 @@ define([
             return null;
         }
         function makePopup(){
-            try{
-            Promise.all([workspace.callFunc('get_objects2',
-                [{ objects: [{ objid: this.dataset.narrativeNum, wsid: this.dataset.wsId }]}])])
-                .spread((res) => {
+
+            workspace.callFunc('get_objects2',
+                [{ objects: [{ objid: this.dataset.narrativeNum, wsid: this.dataset.wsId }]}])
+                .then((res) => {
                     var popUpContainer = document.getElementById('popup-container');
                     popUpContainer.innerHTML = "";
 
@@ -244,11 +244,11 @@ define([
                     buttonWrapper.style.textAlign = "center";
 
                     popUpContainer.appendChild(buttonWrapper);
+                    return null;
+                })
+                .catch((er) => {
+                    //obj usually has been deleted
                 });
-            }catch(er){
-                //obj has been deleted
-            }
-            
         }
 
         function makeDetails(data){
@@ -273,7 +273,7 @@ define([
                     runState = document.createElement('div');
 
                 row.setAttribute('class', 'data-cells');
-                appLogo.setAttribute('class', 'col-sm-2 right-align');
+                appLogo.setAttribute('class', 'col-sm-2 right-align icon-wrapper');
                 appDes.setAttribute('class', 'col-sm-9 ellipsis');
                 runState.setAttribute('class', 'col-sm-2 right-align');
 
@@ -313,12 +313,13 @@ define([
                             }
 
                             appDes.appendChild(textNode(appName));
-                            var params = cell.metadata.kbase.appCell.params;
-                            var appInputs = renderAppInputs(params);
+                            var params = cell.metadata.kbase.appCell;
+                            debugger;
+                            var appInputs = renderAppInputs(params, appDes, appLogo);
                             if(appInputs){
                                 appDes.appendChild(appInputs);
                             }
-
+                            
                             var appOutputs = renderAppOutputs(cell.metadata.kbase.appCell.exec)
                             if(appOutputs) {
                                 appDes.appendChild(appOutputs);
@@ -342,46 +343,123 @@ define([
             })
             return popUp;
         }
-        function renderAppInputs(params){
+        // function renderAppInputs(appCell, appDes, appLogo){
+        //     var params = appCell.params;
+        //     var spec = appCell.app.spec.parameters;
+        //     // debugger;
+        //     var inputs = spec.map((spec) => {
+        //         debugger;
+        //         if(spec.ui_class === "input"){
+        //             return spec.id;
+        //         }
+        //     })
+        //     var input;
+        //     var objId;
+        //     Object.keys(params).forEach((key) => {
+        //         var res = params[key];
+        //         if(isWsObject(res)){
+        //             objId = value;
+        //             input =textNode(key + ": " + value);
+        //         } else if(Array.isArray(res)){
+        //             // since we only want to show one of the inputs if there are multiple
+        //             objId = res[0]
+        //             var str =  key + ": " + objId;
+        //             if(res.length > 1){
+        //                 str += " ..."
+        //             }
+        //             input = textNode(str);
+        //         }
+        //     })
+        //     if(objId === undefined){
+        //         input = textNode("no inputs");
+        //     }else{
+        //         attachAppInputs(objId, appDes, appLogo);
+        //     }
+        //     return input;
+        // }
+        function renderAppInputs(appCell, appDes, appLogo){
+            var params = appCell.params
+            debugger;
             var input;
-            // appDes.appendChild(textNode(input))
-            var regex = RegExp('^\\d+(/\\d+)+$');
-
+            var objId;
             Object.keys(params).forEach((key) => {
-                var isWsObject = true;
-                var value = params[key];
-
-                if (typeof value === 'string' || value instanceof String) {
-                    // debugger;
-                    value.split(";").forEach((seg) => {
-                        if (!regex.test(seg)) {
-                            isWsObject = false;
-                        }else{
-                            //TODO: remove, here just to check that regex is working
-                            console.log(seg);
-                        }
-                    })
-                } else {
-                    isWsObject = false;
-                }
-                if (isWsObject) {
-                    input = textNode(key + ": " + value);
-                }else{
-                    input = textNode("no inputs");
+                var res = params[key];
+                if(isWsObject(res)){
+                    objId = value;
+                    input =textNode(key + ": " + value);
+                } else if(Array.isArray(res)){
+                    // since we only want to show one of the inputs if there are multiple
+                    objId = res[0]
+                    var str =  key + ": " + objId;
+                    if(res.length > 1){
+                        str += " ..."
+                    }
+                    input = textNode(str);
                 }
             })
+            if(objId === undefined){
+                input = textNode("no inputs");
+            }else{
+                attachAppInputs(objId, appDes, appLogo);
+            }
             return input;
         }
+        function isWsObject(input){
+            var isWsObject = true;
+            var regex = RegExp('^\\d+(/\\d+)+$');
 
-        function attachAppInputs(){
 
+            if (typeof input === 'string' || input instanceof String) {
+                input.split(";").forEach((seg) => {
+                    if (!regex.test(seg)) {
+                        isWsObject = false;
+                    } else {
+                        //TODO: remove, here just to check that regex is working
+                        console.log(seg);
+                    }
+                })
+            } 
+            else {
+                isWsObject = false;
+            }
+            return isWsObject; 
+        }
+
+        async function attachAppInputs(refId, appDes, appLogo) {
+            var objName;
+            try {
+                var objInfo = await workspace.callFunc('get_object_info3', [{ objects: [{ ref: refId }] }]);
+                var typeModuleInfo = objInfo[0].infos[0][2].split("-")[0].split(".");
+                objName = objInfo[0].infos[0][1];
+
+                //                if (info && info.objectInfo && info.objectInfo.typeModule && info.objectInfo.typeName) {
+                var info = {objectInfo: {
+                    typeModule: typeModuleInfo[0],
+                    typeName: typeModuleInfo[1]
+                }}
+                // var type = { "type": { module: typeModuleInfo[0], "name": typeModuleInfo[1] } };
+                // var typeInfo = runtime.getService('type').getIcon(type);
+                var icon = getDisplayIcons("data", info);
+                appLogo.appendChild(getDisplayIcons("data", info))
+                console.log(typeInfo.html);
+            } catch (er) {
+                //usually obj has been deleted
+
+            }
+            if (objName) {
+                appDes.appendChild(textNode("inputs are: " + objName))
+            }else{
+                appDes.appendChild(textNode("there are no inputs or inputs are deleted"))
+
+            }
         }
         function renderAppOutputs(exec){
             var output;
             if (exec) {
                 if (exec.jobState) {
                     //first one for now
-                    if (exec.jobState.result && exec.jobState.result[0].report_ref) {
+                    var result = exec.jobState.result;
+                    if (result && result[(result.length - 1)].report_ref) {
                         var refId = exec.jobState.result[0].report_ref;
                         output = document.createElement('div');
                        
@@ -402,8 +480,11 @@ define([
                 var objName;
                 try{
                     var objInfo = await workspace.callFunc('get_object_info3', [{ objects: [{ ref: obj.ref }] }]);
+                    var typeModuleInfo = objInfo[0].infos[0][2].split("-")[0].split(".");
                     objName = objInfo[0].infos[0][1];
-                    // debugger;
+                    var type = { "type": { module: typeModuleInfo[0], "name": typeModuleInfo[1] } };
+                    var typeInfo = runtime.getService('type').getIcon(type);
+                    console.log(typeInfo.html);
                 }catch (er){
                     //usually obj has been deleted
                     output.appendChild(textNode("outputs are probably deleted" ))
@@ -454,6 +535,7 @@ define([
                     icon.setAttribute('class', 'fa fas fa-cube fa-3x');
                 }
             }
+
             return icon;
         }
 

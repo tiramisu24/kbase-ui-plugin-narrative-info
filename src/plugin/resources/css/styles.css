@@ -25,6 +25,14 @@
     text-align: right;
 }
 
+.icon-wrapper{
+    display: flex;
+    width: 250px;
+}
+.icon-wrapper > div{
+    padding: 0px 10px;
+}
+
 .data-cells img {
     width: 50px;
     height: 50px;
