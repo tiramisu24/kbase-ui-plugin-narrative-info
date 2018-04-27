@@ -224,11 +224,11 @@ define([
                     popUpContainer.appendChild(summarySection);
                     //rows of apps
                     if (res[0].data[0].data.cells){
-                        var detailsSection = makeDetails(res[0].data[0].data.cells);
+                        var detailsSection = makeDetails(res[0].data[0].data.cells, this.dataset.wsId);
                         popUpContainer.appendChild(detailsSection);
                     } else if (res[0].data[0].data.worksheets[0].cells){
                         //old narratives
-                        var detailsSection = makeDetails(res[0].data[0].data.worksheets[0].cells);
+                        var detailsSection = makeDetails(res[0].data[0].data.worksheets[0].cells, this.dataset.wsId);
                         popUpContainer.appendChild(detailsSection);                                
                     }
 
@@ -251,7 +251,7 @@ define([
                 });
         }
 
-        function makeDetails(data){
+        function makeDetails(data, wsId){
             //add the first cell as abstract (if it exists)
             var abstract = document.createElement('div');
             document.getElementById('summary-section').appendChild(abstract);
@@ -315,7 +315,8 @@ define([
                             appDes.appendChild(textNode(appName));
                             var params = cell.metadata.kbase.appCell;
                             debugger;
-                            var appInputs = renderAppInputs(params, appDes, appLogo);
+                            var appInputs = renderAppInputs(params, appDes, appLogo, wsId);
+                            debugger;
                             if(appInputs){
                                 appDes.appendChild(appInputs);
                             }
@@ -343,71 +344,27 @@ define([
             })
             return popUp;
         }
-        // function renderAppInputs(appCell, appDes, appLogo){
-        //     var params = appCell.params;
-        //     var spec = appCell.app.spec.parameters;
-        //     // debugger;
-        //     var inputs = spec.map((spec) => {
-        //         debugger;
-        //         if(spec.ui_class === "input"){
-        //             return spec.id;
-        //         }
-        //     })
-        //     var input;
-        //     var objId;
-        //     Object.keys(params).forEach((key) => {
-        //         var res = params[key];
-        //         if(isWsObject(res)){
-        //             objId = value;
-        //             input =textNode(key + ": " + value);
-        //         } else if(Array.isArray(res)){
-        //             // since we only want to show one of the inputs if there are multiple
-        //             objId = res[0]
-        //             var str =  key + ": " + objId;
-        //             if(res.length > 1){
-        //                 str += " ..."
-        //             }
-        //             input = textNode(str);
-        //         }
-        //     })
-        //     if(objId === undefined){
-        //         input = textNode("no inputs");
-        //     }else{
-        //         attachAppInputs(objId, appDes, appLogo);
-        //     }
-        //     return input;
-        // }
-        function renderAppInputs(appCell, appDes, appLogo){
-            var params = appCell.params
-            debugger;
-            var input;
-            var objId;
-            Object.keys(params).forEach((key) => {
-                var res = params[key];
-                if(isWsObject(res)){
-                    objId = value;
-                    input =textNode(key + ": " + value);
-                } else if(Array.isArray(res)){
-                    // since we only want to show one of the inputs if there are multiple
-                    objId = res[0]
-                    var str =  key + ": " + objId;
-                    if(res.length > 1){
-                        str += " ..."
-                    }
-                    input = textNode(str);
+        function renderAppInputs(appCell, appDes, appLogo, wsId){
+            var params = appCell.params;
+            var spec = appCell.app.spec.parameters;
+            var inputs = spec.map((spec) => {
+                if(spec.ui_class === "input"){
+                    return spec.id;
                 }
             })
-            if(objId === undefined){
-                input = textNode("no inputs");
+            //we only want to show first input if there are multiple
+            if(inputs.length > 0){
+                var inputObjects = params[inputs[0]];
+                attachAppInputs(inputObjects, appDes, appLogo, wsId);
             }else{
-                attachAppInputs(objId, appDes, appLogo);
+                appDes.appendChild(textNode("no inputs"));
             }
-            return input;
+            // return input;
         }
+
         function isWsObject(input){
             var isWsObject = true;
             var regex = RegExp('^\\d+(/\\d+)+$');
-
 
             if (typeof input === 'string' || input instanceof String) {
                 input.split(";").forEach((seg) => {
@@ -425,33 +382,43 @@ define([
             return isWsObject; 
         }
 
-        async function attachAppInputs(refId, appDes, appLogo) {
-            var objName;
-            try {
-                var objInfo = await workspace.callFunc('get_object_info3', [{ objects: [{ ref: refId }] }]);
-                var typeModuleInfo = objInfo[0].infos[0][2].split("-")[0].split(".");
+        async function attachAppInputs(inputObjects, appDes, appLogo, wsId) {
+            var objId = inputObjects;
+            if(Array.isArray(objId)){
+                inputObjects.flatten();
+                objId = inputObjects[0];
+            }
+            var objName,
+                objects;
+
+            if(isWsObject(objId)){
                 objName = objInfo[0].infos[0][1];
+                objects = { objects: [{ ref: objId }] };
+            }else{
+                objName = objId;
+                objects = { objects: [{ wsid: wsId, name: objName }] };
+            }
+            try {
+                var objInfo = await workspace.callFunc('get_object_info3', [objects]);
+                var typeModuleInfo = objInfo[0].infos[0][2].split("-")[0].split(".");
 
                 //                if (info && info.objectInfo && info.objectInfo.typeModule && info.objectInfo.typeName) {
-                var info = {objectInfo: {
-                    typeModule: typeModuleInfo[0],
-                    typeName: typeModuleInfo[1]
-                }}
-                // var type = { "type": { module: typeModuleInfo[0], "name": typeModuleInfo[1] } };
-                // var typeInfo = runtime.getService('type').getIcon(type);
+                var info = {
+                    objectInfo: {
+                        typeModule: typeModuleInfo[0],
+                        typeName: typeModuleInfo[1]
+                    }
+                }
                 var icon = getDisplayIcons("data", info);
                 appLogo.appendChild(getDisplayIcons("data", info))
-                console.log(typeInfo.html);
             } catch (er) {
                 //usually obj has been deleted
+                appDes.appendChild(textNode("there are no inputs or inputs are deleted"));
+                return;
 
             }
-            if (objName) {
-                appDes.appendChild(textNode("inputs are: " + objName))
-            }else{
-                appDes.appendChild(textNode("there are no inputs or inputs are deleted"))
+            appDes.appendChild(textNode("inputs: " + objName));
 
-            }
         }
         function renderAppOutputs(exec){
             var output;
