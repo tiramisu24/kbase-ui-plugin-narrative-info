@@ -38,6 +38,10 @@
     height: 50px;
 }
 
+.app-first-line{
+    font-style: italic;
+    margin-left: 15px;
+}
 
 
 #summary-section{

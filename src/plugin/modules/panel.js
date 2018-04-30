@@ -282,8 +282,12 @@ define([
                 row.appendChild(runState);
 
                 if(cell.cell_type === "markdown"){
-                    appDes.appendChild(textNode("Markdown"));
-                    appDes.appendChild(textNode(cell.source));
+                    // appDes.appendChild(textNode("Markdown"));
+                    if(cell.metadata.kbase.attributes && cell.metadata.kbase.attributes.title){
+                        appDes.appendChild(textNode(cell.metadata.kbase.attributes.title));
+                    }else{
+                        appDes.appendChild(textNode(cell.source));
+                    }
                     appLogo.appendChild(getDisplayIcons("markdown"));
 
                 }else if(cell.cell_type === "code"){
@@ -313,25 +317,41 @@ define([
                             }
 
                             appDes.appendChild(textNode(appName));
+                            var firstLine = textNode(cell.source);
+                            firstLine.setAttribute('class', 'app-first-line');
+                            appDes.appendChild(firstLine);
+                            
                             var params = cell.metadata.kbase.appCell;
                             var appInputs = renderAppInputs(params, appDes, appLogo, wsId);
                             if(appInputs){
                                 appDes.appendChild(appInputs);
                             }
+              
+
+ 
                             
-                            // var appOutputs = renderAppOutputs(cell.metadata.kbase.appCell.exec)
-                            // if(appOutputs) {
-                            //     appDes.appendChild(appOutputs);
-                            // }
-                            // var jobState = cell.metadata.kbase.appCell.fsm.currentState.mode;
-                            // runState.appendChild(appStateIcons(jobState));
+
+                            //hide outputs and jobState
+                            /**
+                             var appOutputs = renderAppOutputs(cell.metadata.kbase.appCell.exec)
+                             if(appOutputs) {
+                                 appDes.appendChild(appOutputs);
+                             }
+                             var jobState = cell.metadata.kbase.appCell.fsm.currentState.mode;
+                             runState.appendChild(appStateIcons(jobState));
+                            **/
     
                         } else {
                             //cell is a script
                             appDes.appendChild(textNode("Custom Code"));
+                            var firstLine = textNode(cell.source);
+                            firstLine.setAttribute('class', 'app-first-line');
+                            appDes.appendChild(firstLine);
+                            // appDes.appendChild(textNode(cell.source));
                             appLogo.appendChild(getDisplayIcons("custom"));
                         }
                     }else {
+                        debugger;
                         //cell is a script
                         appDes.appendChild(textNode("Dinosaur Code"));
                         appLogo.appendChild(getDisplayIcons("emergency")); 
@@ -479,7 +499,7 @@ define([
             }
             //custom code
             if (state === "custom") {
-                icon.setAttribute('class', 'fa fas fa-archive fa-3x');
+                icon.setAttribute('class', 'fa fas fa-terminal fa-3x');
             }
             //apps or code that does not have standard fields
             if (state === "emergency"){
@@ -503,15 +523,18 @@ define([
                     var type = runtime.service('type').parseTypeId(info.objectInfo.type);
                     var typeInfo = runtime.getService('type').getIcon({ type: type });
                     icon.innerHTML = typeInfo.html;
+                    icon.style.color = typeInfo.color;
                 } else if (info && info.objectInfo && info.objectInfo.typeModule && info.objectInfo.typeName) {
                     var objectInfo = info.objectInfo;
                     //{ "type": { "module": "KBaseGenomes", "name": "Genome" } }
                     var type = { "type": { module: objectInfo.typeModule, "name": objectInfo.typeName } };
                     var typeInfo = runtime.getService('type').getIcon(type);
                     icon.innerHTML = typeInfo.html;
+                    icon.style.color = typeInfo.color;
                 } 
                 else {
                     icon.setAttribute('class', 'fa fas fa-cube fa-3x');
+                    icon.style.color = "cornflowerblue";
                 }
             }
 
