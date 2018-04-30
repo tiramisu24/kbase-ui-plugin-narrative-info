@@ -314,19 +314,17 @@ define([
 
                             appDes.appendChild(textNode(appName));
                             var params = cell.metadata.kbase.appCell;
-                            debugger;
                             var appInputs = renderAppInputs(params, appDes, appLogo, wsId);
-                            debugger;
                             if(appInputs){
                                 appDes.appendChild(appInputs);
                             }
                             
-                            var appOutputs = renderAppOutputs(cell.metadata.kbase.appCell.exec)
-                            if(appOutputs) {
-                                appDes.appendChild(appOutputs);
-                            }
-                            var jobState = cell.metadata.kbase.appCell.fsm.currentState.mode;
-                            runState.appendChild(appStateIcons(jobState));
+                            // var appOutputs = renderAppOutputs(cell.metadata.kbase.appCell.exec)
+                            // if(appOutputs) {
+                            //     appDes.appendChild(appOutputs);
+                            // }
+                            // var jobState = cell.metadata.kbase.appCell.fsm.currentState.mode;
+                            // runState.appendChild(appStateIcons(jobState));
     
                         } else {
                             //cell is a script
@@ -337,7 +335,7 @@ define([
                         //cell is a script
                         appDes.appendChild(textNode("Dinosaur Code"));
                         appLogo.appendChild(getDisplayIcons("emergency")); 
-                        runState.appendChild(appStateIcons("emergency"));
+                        // runState.appendChild(appStateIcons("emergency"));
                 }
             }
                 popUp.appendChild(row);
@@ -347,14 +345,12 @@ define([
         function renderAppInputs(appCell, appDes, appLogo, wsId){
             var params = appCell.params;
             var spec = appCell.app.spec.parameters;
-            var inputs = spec.map((spec) => {
-                if(spec.ui_class === "input"){
-                    return spec.id;
-                }
-            })
+            var inputs = spec.filter(spec => (spec.ui_class === "input"));
             //we only want to show first input if there are multiple
             if(inputs.length > 0){
-                var inputObjects = params[inputs[0]];
+                var inputObjects = inputs.map((input) => {
+                    return params[input.id]
+                });
                 attachAppInputs(inputObjects, appDes, appLogo, wsId);
             }else{
                 appDes.appendChild(textNode("no inputs"));
@@ -383,16 +379,23 @@ define([
         }
 
         async function attachAppInputs(inputObjects, appDes, appLogo, wsId) {
-            var objId = inputObjects;
+            var multipleInputs = (inputObjects.length >1) ? true : false; 
+            var objId = inputObjects[0];
             if(Array.isArray(objId)){
-                inputObjects.flatten();
-                objId = inputObjects[0];
+                if(objId.length > 1){
+                    multipleInputs ==false;
+                }
+                objId = objId[0];
+            }
+
+            if(objId === null || objId === undefined){
+                appDes.appendChild(textNode("there are no inputs"));
+                return;
             }
             var objName,
                 objects;
 
             if(isWsObject(objId)){
-                objName = objInfo[0].infos[0][1];
                 objects = { objects: [{ ref: objId }] };
             }else{
                 objName = objId;
@@ -400,22 +403,26 @@ define([
             }
             try {
                 var objInfo = await workspace.callFunc('get_object_info3', [objects]);
+                objName = objInfo[0].infos[0][1];
                 var typeModuleInfo = objInfo[0].infos[0][2].split("-")[0].split(".");
 
                 //                if (info && info.objectInfo && info.objectInfo.typeModule && info.objectInfo.typeName) {
                 var info = {
                     objectInfo: {
-                        typeModule: typeModuleInfo[0],
-                        typeName: typeModuleInfo[1]
+                        type: objInfo[0].infos[0][2]
                     }
                 }
                 var icon = getDisplayIcons("data", info);
                 appLogo.appendChild(getDisplayIcons("data", info))
             } catch (er) {
                 //usually obj has been deleted
+                console.log(er);
                 appDes.appendChild(textNode("there are no inputs or inputs are deleted"));
                 return;
 
+            }
+            if(multipleInputs){
+                objName += "...";
             }
             appDes.appendChild(textNode("inputs: " + objName));
 
@@ -434,7 +441,7 @@ define([
                     }
                 } else {
                     //old apps skip
-                    debugger;
+
                 }
             }
             return output;
@@ -492,13 +499,18 @@ define([
             }
             //data cells
             if(state === "data"){
-                if (info && info.objectInfo && info.objectInfo.typeModule && info.objectInfo.typeName) {
+                if (info && info.objectInfo && info.objectInfo.type) {
+                    var type = runtime.service('type').parseTypeId(info.objectInfo.type);
+                    var typeInfo = runtime.getService('type').getIcon({ type: type });
+                    icon.innerHTML = typeInfo.html;
+                } else if (info && info.objectInfo && info.objectInfo.typeModule && info.objectInfo.typeName) {
                     var objectInfo = info.objectInfo;
                     //{ "type": { "module": "KBaseGenomes", "name": "Genome" } }
                     var type = { "type": { module: objectInfo.typeModule, "name": objectInfo.typeName } };
                     var typeInfo = runtime.getService('type').getIcon(type);
                     icon.innerHTML = typeInfo.html;
-                } else {
+                } 
+                else {
                     icon.setAttribute('class', 'fa fas fa-cube fa-3x');
                 }
             }
