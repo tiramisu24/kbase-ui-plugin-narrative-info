@@ -3,7 +3,7 @@
     color: red;
 }
 .narrative_buttons{
-    border: 2px solid grey;
+    /* border: 2px solid grey; */
     padding: 5px;
     margin: 5px;
 }
@@ -72,12 +72,18 @@
     border-radius: 20px;
     padding: 20px;
     position: fixed;
-    right: 15px;
+    left: 20%;
+    top: 10%;
     overflow-y: auto;
     height: 80vh;
+    width: 750px;
+    background-color: cornsilk;
 }
 
 .popup-container:last-child{
     text-align: center;
 }
 
+/* .modal-backdrop{
+    z-index: -1000;
+} */

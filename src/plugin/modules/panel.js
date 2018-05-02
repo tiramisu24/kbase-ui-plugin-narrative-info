@@ -20,14 +20,17 @@ define([
     'kb_common/bootstrapUtils',
     './lib/utils',
     'kb_common/jsonRpc/genericClient',
-    './lib/rpc'
+    './lib/rpc',
+    'jquery',
+    'bootstrap'
 ], function (
     Promise, 
     html, 
     BS,
     Utils,
     GenericClient,
-    RPC
+    RPC,
+    $
 ) {
     /* DOC: strict mode
         * We always set strict mode with the following magic javascript
@@ -95,66 +98,7 @@ define([
             * layout upon which it will attache widgets.
             * 
             */
-        function layout() {
-            /* DOC: return some structure
-                * The render function returns enough structure to represent
-                * what needs to be rendered. This is not hard-coded at all, 
-                * and is just a convention within this panel. It has turned
-                * out, however, to be a useful pattern.
-                */
-            return div({
-                class: 'plugin_narrative-info_panel container-fluid'
-            }, [
-                div({
-                    class: 'row'
-                }, [
-                    div({class: 'col-sm-6'}, [
-                        h2('Test'),
-                        p([
-                            'This is a very simple sample plugin. It consists of just a single panel, with ',
-                            'some helper functions in lib/utils.js.'
-                        ]),
-                        p([
-                            'From this starting point one may build a more complex plugin.'
-                        ]),
-                        p([
-                            'For instance, it is easy to hook in jquery widgets by instantiating them in either the ',
-                            'attach or start methods. Knockout components can likewise be integrated simply by creating the ',
-                            'appropriate markup.'
-                        ]),
-                        p([
-                            'In the old days, as can be seen in the dashboard plugin, the plugin is composed of ',
-                            'kbase-ui style widgets which are defined and then composed through the kb_widget module. ',
-                            'This method was especially useful for migrating jquery-style widgets into kbase-ui, as can be ',
-                            'seen in the dataview landing page plugin.',
-                            'It was also useful for composing factory-style widgets based on the nunjucks (jinja clone) templating ',
-                            'library, since the widgets are simply modules which can be composed of submodules, etc.'
-                        ]),
-                        p([
-                            'A more recent approach is to compose a plugin out of knockout components, as can be seen in ',
-                            'the auth2, RESKE search, and JGI search plugins.'
-                        ]),
-                        p([
-                            'Hopefully there will be sample plugins demonstrating each of these techniques in a simplified and ',
-                            'documented form.'
-                        ])
-                    ]),
-                    div({class: 'col-sm-6'}, [
-                        BS.buildPanel({
-                            title: 'Sample Panel',
-                            body: div([
-                                p('This is a simple panel in a simple widget'),
-                                p([
-                                    'It does\'t do much other than demonstrate the relatively easy creation of ',
-                                    'a bootstrap panel within a ui panel.'
-                                ]),
-                                p(Utils.something())
-                            ])
-                        })
-                    ])
-                ])
-            ]);
-        }
+
 
         /* DOC: init event
         * Since a panel implements the widget interface, it starts 
@@ -208,6 +152,8 @@ define([
                     var popUpContainer = document.getElementById('popup-container');
                     popUpContainer.innerHTML = "";
 
+    
+
 
                     var summarySection = document.createElement('div');
                     summarySection.setAttribute('id', 'summary-section')
@@ -218,7 +164,8 @@ define([
 
                     var authorSection = document.createElement('div');
                     authorSection.style.fontStyle = "italic";
-                    authorSection.textContent = "by " + this.dataset.authorName + ", last updated " + this.dataset.createdDate;
+                    authorSection.textContent = "by " + this.dataset.authorName + ", last updated " 
+                        + getNiceDate(this.dataset.createdDate);
                     summarySection.appendChild(authorSection);
 
                     popUpContainer.appendChild(summarySection);
@@ -586,33 +533,55 @@ define([
             line.setAttribute('class', 'app-first-line');
             return line
         }
+        function addCol(input){
+            var colItem = document.createElement('td');
+            colItem.textContent = input;
+            // col.setAttribute('scope', 'col')
+            return colItem;
+        }
+        function getNiceDate(d){
+            var options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            var date = new Date(d);
+            return date.toLocaleDateString('en-US', options);
+
+        }
         function start(params) {
             /* DOC: dom access
             * In this case we are keeping things simple by using 
             * the plain DOM API. We could also use jquery 
             * here if we wish to.
             */
-            // container.innerHTML = layout();
-            var narrativesContainer = document.createElement('div');
-            narrativesContainer.setAttribute('id', 'narratives-container');
-            narrativesContainer.setAttribute('class', 'col-sm-4');
+           
+           var narrativesContainer = document.createElement('table');
+            narrativesContainer.setAttribute('class', 'table table-bordered');
             container.appendChild(narrativesContainer);
+
+            var heading = document.createElement('tr');
+            heading.appendChild(addCol("Narrative Names"));
+            heading.appendChild(addCol("Author"));
+            heading.appendChild(addCol("Created Date"));
+            narrativesContainer.appendChild(heading);
+
  //owners: ['dianez']
-            Promise.all([workspace.callFunc('list_workspace_info', [{ meta: { is_temporary: "false" }}])])
+            Promise.all([workspace.callFunc('list_workspace_info', [{ meta: { is_temporary: "false" }, owners: ['dianez']}])])
             .spread((res) => {
                 res[0].forEach((obj) => {
                     if (obj[8] && obj[8].narrative && obj[8].narrative_nice_name){
-                        var node = document.createElement('div');
+                        var node = document.createElement('tr');
                         node.setAttribute('data-ws-id', obj[0]);
                         node.setAttribute('data-author-name', obj[2]);
                         node.setAttribute('data-created-date', obj[3]);
                         node.setAttribute('data-narrative-name', obj[8].narrative_nice_name);
                         node.setAttribute('data-narrative-num', obj[8].narrative);
                         node.setAttribute('class', 'narrative_buttons');
-                        var narrative = document.createTextNode("Workspace with Narrative: " + obj[8].narrative_nice_name
-                        + " with wsId: " + obj[0]);
-                        node.appendChild(narrative);
+
+                        node.appendChild(addCol(obj[8].narrative_nice_name));
+                        node.appendChild(addCol(obj[2]));
+
+                        node.appendChild(addCol(getNiceDate(obj[3])));
                         node.onclick = makePopup;
+                        node.setAttribute('data-toggle', 'modal');
+                        node.setAttribute('data-target', '#popup-container');
                         narrativesContainer.appendChild(node);
                     }
                 })
@@ -620,7 +589,15 @@ define([
 
             var popUpContainer = document.createElement('div');
             popUpContainer.setAttribute('id', 'popup-container');
-            popUpContainer.setAttribute('class', 'col-sm-7');
+            popUpContainer.setAttribute('class', 'modal fade');
+            popUpContainer.setAttribute('role', 'dialog');
+            popUpContainer.setAttribute('area-labelledby', 'narrativeLabel');
+
+            
+            // $('.modal-backdrop').click(() => {
+            //     debugger;
+            // })
+            // popUpContainer.setAttribute('class', 'col-sm-7');
             container.appendChild(popUpContainer);
 
       
