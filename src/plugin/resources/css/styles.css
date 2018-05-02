@@ -1,11 +1,7 @@
-/* Styles for the sample plugin */
-.plugin_narrative-info_panel h2 {
-    color: red;
-}
-.narrative_buttons{
-    /* border: 2px solid grey; */
-    padding: 5px;
-    margin: 5px;
+
+.narrative-buttons{
+    padding: 10px;
+    border-bottom: 1px solid lavender;
 }
 .narrative_buttons:hover{
     background-color:lightgrey;
@@ -18,7 +14,7 @@
 }
 .data-cells > div {
     padding: 4px 8px;
-    min-height: 65px;
+    min-height: 50px;
 }
 
 .right-align{
@@ -27,7 +23,7 @@
 
 .icon-wrapper{
     display: flex;
-    width: 150px;
+    width: 120px;
 }
 .icon-wrapper > i{
     justify-content: center;
@@ -77,6 +73,8 @@
 .narrative-info-background{
     border: 1px solid grey;
     background-color: cornsilk;
+    border-radius: 15px;
+    padding: 20px;
 }
 
 .popup-container:last-child{

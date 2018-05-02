@@ -145,7 +145,6 @@ define([
             return null;
         }
         function makePopup(){
-
             workspace.callFunc('get_objects2',
                 [{ objects: [{ objid: this.dataset.narrativeNum, wsid: this.dataset.wsId }]}])
                 .then((res) => {
@@ -173,6 +172,7 @@ define([
 
                     modalDialog.appendChild(summarySection);
                     //rows of apps
+
                     if (res[0].data[0].data.cells){
                         var detailsSection = makeDetails(res[0].data[0].data.cells, this.dataset.wsId);
                         modalDialog.appendChild(detailsSection);
@@ -262,10 +262,16 @@ define([
                             var appKey = cell.metadata.kbase.appCell.app.id;
                             var tag = cell.metadata.kbase.appCell.app.tag;
 
-                            if(appKey){                            
+                            if(appKey){ 
                                 var info = appsLib[tag][appKey];
-                                appName = info.info.name;
-                                appLogo.appendChild(getDisplayIcons("app", info.info));
+                                if(info){
+                                    appName = info.info.name;
+                                    appLogo.appendChild(getDisplayIcons("app", info.info));
+                                }else{
+                                    //if app is not in catalog
+                                    appName = appKey;
+                                    appLogo.appendChild(getDisplayIcons("custom"));
+                                }
                             }else{
                                 appName = "Dinosaur Code";
                                 appLogo.appendChild(getDisplayIcons("emergency")); 
@@ -538,8 +544,8 @@ define([
         }
         function addCol(input){
             var colItem = document.createElement('td');
+            colItem.setAttribute('class', 'narrative-buttons')
             colItem.textContent = input;
-            // col.setAttribute('scope', 'col')
             return colItem;
         }
         function getNiceDate(d){
@@ -597,19 +603,8 @@ define([
             popUpContainer.setAttribute('role', 'dialog');
             popUpContainer.setAttribute('area-labelledby', 'narrativeLabel');
 
-            
-            // $('.modal-backdrop').click(() => {
-            //     debugger;
-            // })
-            // popUpContainer.setAttribute('class', 'col-sm-7');
             container.appendChild(popUpContainer);
 
-      
-
-            //TODO: make call to workspace then send to layout
-
-
-            // return rpc.call('KBaseSearchEngine', 'search_objects', [param])
 
             /* DOC: runtime interface
             * Since a panel title is also, logically, the title of
