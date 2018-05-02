@@ -152,7 +152,10 @@ define([
                     var popUpContainer = document.getElementById('popup-container');
                     popUpContainer.innerHTML = "";
 
-    
+                    var modalDialog = document.createElement('div');
+                    modalDialog.setAttribute('class', 'modal-dialog narrative-info-background');
+                    popUpContainer.appendChild(modalDialog);
+
 
 
                     var summarySection = document.createElement('div');
@@ -168,15 +171,15 @@ define([
                         + getNiceDate(this.dataset.createdDate);
                     summarySection.appendChild(authorSection);
 
-                    popUpContainer.appendChild(summarySection);
+                    modalDialog.appendChild(summarySection);
                     //rows of apps
                     if (res[0].data[0].data.cells){
                         var detailsSection = makeDetails(res[0].data[0].data.cells, this.dataset.wsId);
-                        popUpContainer.appendChild(detailsSection);
+                        modalDialog.appendChild(detailsSection);
                     } else if (res[0].data[0].data.worksheets[0].cells){
                         //old narratives
                         var detailsSection = makeDetails(res[0].data[0].data.worksheets[0].cells, this.dataset.wsId);
-                        popUpContainer.appendChild(detailsSection);                                
+                        modalDialog.appendChild(detailsSection);                                
                     }
 
                     var openNarrativeButton = document.createElement('a');
@@ -190,7 +193,7 @@ define([
                     buttonWrapper.appendChild(openNarrativeButton);
                     buttonWrapper.style.textAlign = "center";
 
-                    popUpContainer.appendChild(buttonWrapper);
+                    modalDialog.appendChild(buttonWrapper);
                     return null;
                 })
                 .catch((er) => {
@@ -226,7 +229,7 @@ define([
 
                 row.appendChild(appLogo);
                 row.appendChild(appDes);
-                row.appendChild(runState);
+                // row.appendChild(runState);
 
                 if(cell.cell_type === "markdown"){
                     // appDes.appendChild(textNode("Markdown"));
@@ -442,7 +445,7 @@ define([
         }
 
         function getDisplayIcons(state, info){
-            var icon = document.createElement('div');
+            var icon = document.createElement('i');
             icon.style.fontSize = "3em";
             if(state === "markdown"){
                 icon.setAttribute('class', 'fa fa-paragraph ');
@@ -551,6 +554,7 @@ define([
             * the plain DOM API. We could also use jquery 
             * here if we wish to.
             */
+      
            
            var narrativesContainer = document.createElement('table');
             narrativesContainer.setAttribute('class', 'table table-bordered');
@@ -563,7 +567,7 @@ define([
             narrativesContainer.appendChild(heading);
 
  //owners: ['dianez']
-            Promise.all([workspace.callFunc('list_workspace_info', [{ meta: { is_temporary: "false" }, owners: ['dianez']}])])
+            Promise.all([workspace.callFunc('list_workspace_info', [{ meta: { is_temporary: "false" }}])])
             .spread((res) => {
                 res[0].forEach((obj) => {
                     if (obj[8] && obj[8].narrative && obj[8].narrative_nice_name){

@@ -22,20 +22,21 @@
 }
 
 .right-align{
-    text-align: right;
-}
+    align-items: center;
+    justify-content: space-between;}
 
 .icon-wrapper{
     display: flex;
     width: 150px;
 }
-.icon-wrapper > div{
-    padding: 0px 10px;
+.icon-wrapper > i{
+    justify-content: center;
+    display: flex;
 }
 
 .data-cells img {
-    width: 50px;
-    height: 50px;
+    width: 42px;
+    height: 42px;
 }
 
 .app-first-line{
@@ -43,12 +44,19 @@
     margin-left: 15px;
 }
 .default-app{
-    border: 3px solid black;
+    background-color: blanchedalmond;
     border-radius: 10px;
+    width: 42px;
+    height: 42px;
 }
-.custome-code{
+.custom-code{
     background-color:grey;
+    color: white;
+    border-radius: 10px;
+    width: 42px;
+    height: 42px;
 }
+
 
 
 #summary-section{
@@ -66,24 +74,11 @@
     overflow: hidden
 }
 
-#popup-container{
+.narrative-info-background{
     border: 1px solid grey;
-    margin: 20px;
-    border-radius: 20px;
-    padding: 20px;
-    position: fixed;
-    left: 20%;
-    top: 10%;
-    overflow-y: auto;
-    height: 80vh;
-    width: 750px;
     background-color: cornsilk;
 }
 
 .popup-container:last-child{
     text-align: center;
 }
-
-/* .modal-backdrop{
-    z-index: -1000;
-} */
