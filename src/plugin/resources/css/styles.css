@@ -27,7 +27,7 @@
 
 .icon-wrapper{
     display: flex;
-    width: 250px;
+    width: 150px;
 }
 .icon-wrapper > div{
     padding: 0px 10px;
@@ -41,6 +41,13 @@
 .app-first-line{
     font-style: italic;
     margin-left: 15px;
+}
+.default-app{
+    border: 3px solid black;
+    border-radius: 10px;
+}
+.custome-code{
+    background-color:grey;
 }
 
 

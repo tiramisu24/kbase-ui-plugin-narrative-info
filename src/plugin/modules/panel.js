@@ -283,25 +283,30 @@ define([
 
                 if(cell.cell_type === "markdown"){
                     // appDes.appendChild(textNode("Markdown"));
-                    if(cell.metadata.kbase.attributes && cell.metadata.kbase.attributes.title){
+                    if (cell.metadata.kbase && cell.metadata.kbase.attributes && cell.metadata.kbase.attributes.title){
                         appDes.appendChild(textNode(cell.metadata.kbase.attributes.title));
                     }else{
                         appDes.appendChild(textNode(cell.source));
                     }
                     appLogo.appendChild(getDisplayIcons("markdown"));
 
-                }else if(cell.cell_type === "code"){
+                }
+                else if(cell.cell_type === "code"){
+                    // debugger;
                     if(cell.metadata.kbase){
                         if (cell.metadata.kbase.type === "data"){
-                            appDes.appendChild(textNode("Data Cell"));
+                            appDes.appendChild(boldTextNode("Data Cell"));
                             if (cell.metadata.kbase.dataCell) {
-                                appDes.appendChild(textNode("Data: " + cell.metadata.kbase.dataCell.objectInfo.name));
+                                appDes.appendChild(firstLine(cell.metadata.kbase.dataCell.objectInfo.name));
                             } else {
-                                appDes.appendChild(textNode("Unknown"));
+                                // appDes.appendChild(firstLine("Unknown"));
                             }
                             appLogo.appendChild(getDisplayIcons("data", cell.metadata.kbase.dataCell));
 
-                        } else if (cell.metadata.kbase.type === "app") {
+                        } else if (cell.metadata.kbase.type === "output"){
+                            //ignore output cells
+                            return;
+                        }else if (cell.metadata.kbase.type === "app") {
 
                             var appName;
                             var appKey = cell.metadata.kbase.appCell.app.id;
@@ -316,10 +321,8 @@ define([
                                 appLogo.appendChild(getDisplayIcons("emergency")); 
                             }
 
-                            appDes.appendChild(textNode(appName));
-                            var firstLine = textNode(cell.source);
-                            firstLine.setAttribute('class', 'app-first-line');
-                            appDes.appendChild(firstLine);
+                            appDes.appendChild(boldTextNode(appName));
+                            // appDes.appendChild(firstLine(cell.source));
                             
                             var params = cell.metadata.kbase.appCell;
                             var appInputs = renderAppInputs(params, appDes, appLogo, wsId);
@@ -343,19 +346,22 @@ define([
     
                         } else {
                             //cell is a script
-                            appDes.appendChild(textNode("Custom Code"));
-                            var firstLine = textNode(cell.source);
-                            firstLine.setAttribute('class', 'app-first-line');
-                            appDes.appendChild(firstLine);
-                            // appDes.appendChild(textNode(cell.source));
+                            appDes.appendChild(boldTextNode("Custom App"));
+                            appDes.appendChild(textNode(cell.source));
                             appLogo.appendChild(getDisplayIcons("custom"));
                         }
                     }else {
-                        debugger;
-                        //cell is a script
-                        appDes.appendChild(textNode("Dinosaur Code"));
-                        appLogo.appendChild(getDisplayIcons("emergency")); 
-                        // runState.appendChild(appStateIcons("emergency"));
+                        //cell is a code cell
+                        appDes.appendChild(boldTextNode("Code Cell"));
+                        appLogo.appendChild(getDisplayIcons("custom")); 
+                        if(cell.input){
+                            appDes.appendChild(textNode(cell.input));
+                        }else if(cell.source){
+                            appDes.appendChild(firstLine(cell.source));
+                        }else{
+                            //empty cell
+                            appDes.appendChild(firstLine("Empty Cell"));
+                        }
                 }
             }
                 popUp.appendChild(row);
@@ -372,10 +378,10 @@ define([
                     return params[input.id]
                 });
                 attachAppInputs(inputObjects, appDes, appLogo, wsId);
-            }else{
-                appDes.appendChild(textNode("no inputs"));
             }
-            // return input;
+            // else{
+            //     appDes.appendChild(textNode("no inputs"));
+            // }
         }
 
         function isWsObject(input){
@@ -386,9 +392,6 @@ define([
                 input.split(";").forEach((seg) => {
                     if (!regex.test(seg)) {
                         isWsObject = false;
-                    } else {
-                        //TODO: remove, here just to check that regex is working
-                        console.log(seg);
                     }
                 })
             } 
@@ -409,7 +412,8 @@ define([
             }
 
             if(objId === null || objId === undefined){
-                appDes.appendChild(textNode("there are no inputs"));
+                //no inputs
+                // appDes.appendChild(textNode("there are no inputs"));
                 return;
             }
             var objName,
@@ -436,15 +440,14 @@ define([
                 appLogo.appendChild(getDisplayIcons("data", info))
             } catch (er) {
                 //usually obj has been deleted
-                console.log(er);
-                appDes.appendChild(textNode("there are no inputs or inputs are deleted"));
+                // appDes.appendChild(textNode("there are no inputs or inputs are deleted"));
                 return;
 
             }
             if(multipleInputs){
                 objName += "...";
             }
-            appDes.appendChild(textNode("inputs: " + objName));
+            appDes.appendChild(firstLine(objName));
 
         }
         function renderAppOutputs(exec){
@@ -499,11 +502,11 @@ define([
             }
             //custom code
             if (state === "custom") {
-                icon.setAttribute('class', 'fa fas fa-terminal fa-3x');
+                icon.setAttribute('class', 'fa fas fa-terminal  custom-code');
             }
             //apps or code that does not have standard fields
             if (state === "emergency"){
-                icon.setAttribute('class', 'fa fas fa-archive fa-3x');
+                icon.setAttribute('class', 'fa fas fa-archive');
             }
             //app
             if(state === "app"){
@@ -514,7 +517,7 @@ define([
                     customLogo.src = imageUrl;
                     icon.appendChild(customLogo);
                 } else {
-                    icon.setAttribute('class', 'fa fas fa-terminal fa-3x');
+                    icon.setAttribute('class', 'fa fas fa-terminal fa-3x default-app');
                 }
             }
             //data cells
@@ -531,6 +534,7 @@ define([
                     var typeInfo = runtime.getService('type').getIcon(type);
                     icon.innerHTML = typeInfo.html;
                     icon.style.color = typeInfo.color;
+                    
                 } 
                 else {
                     icon.setAttribute('class', 'fa fas fa-cube fa-3x');
@@ -571,6 +575,16 @@ define([
             var node = document.createElement('div');
             node.textContent = text;
             return node;
+        }
+        function boldTextNode(input){
+            var line = textNode(input);
+            line.style.fontWeight = "bold";
+            return line
+        }
+        function firstLine(input){ 
+            var line = textNode(input);
+            line.setAttribute('class', 'app-first-line');
+            return line
         }
         function start(params) {
             /* DOC: dom access
