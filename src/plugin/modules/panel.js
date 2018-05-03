@@ -445,25 +445,31 @@ define([
                 }
             }))
         }
-
+        
         function getDisplayIcons(state, info){
             var icon = document.createElement('i');
             if(state === "markdown"){
-                // ;
-                // var typeInfo = {
-                //     classes: ["fa-paragraph"],
-                //     color: "blanchedalmond"
-                // }
-                // icon.innerHTML = prettyIcons("square", typeInfo);
-                icon.setAttribute('class', 'fa fa-paragraph app-logos');
+                var typeInfo = {
+                    classes: ["fa", "fa-paragraph grey-color"],
+                    color: "blanchedalmond"
+                }
+                icon.innerHTML = prettyIcons("square", typeInfo);
             }
             //custom code
             if (state === "custom") {
-                icon.setAttribute('class', 'fa fas fa-terminal  custom-code app-logos');
+                var typeInfo = {
+                    classes: ["fa", "fa-terminal almond-color"],
+                    color: "grey"
+                }
+                icon.innerHTML = prettyIcons("square", typeInfo);
             }
             //apps or code that does not have standard fields
             if (state === "emergency"){
-                icon.setAttribute('class', 'fa fas fa-archive app-logos');
+                var typeInfo = {
+                    classes: ["fa", "fa-archive almond-color"],
+                    color: "rgb(240, 131, 131)"
+                }
+                icon.innerHTML = prettyIcons("square", typeInfo);
             }
             //app
             if(state === "app"){
@@ -474,8 +480,11 @@ define([
                     customLogo.src = imageUrl;
                     icon.appendChild(customLogo);
                 } else {
-                    icon.setAttribute('class', 'fa fas fa-terminal fa-3x default-app app-logos');
-                }
+                    var typeInfo = {
+                        classes: ["fa", "fa-paragraph grey-color"],
+                        color: "blanchedalmond"
+                    }
+                    icon.innerHTML = prettyIcons("square", typeInfo);                }
             }
             //data cells
             if(state === "data"){
@@ -512,6 +521,9 @@ define([
                 t('i')({ class: shape, style: { color: typeInfo.color } }),
                 t('i')({ class: 'fa-inverse fa-stack-1x ' + typeInfo.classes.join(' ') })
             ])
+            // return t('span')({ class: 'fa-stack fa-2x' }, [
+            //     t('i')({ class: 'fa-inverse fa-stack-1x ' + typeInfo.classes.join(' ') })
+            // ])
             
         }
 

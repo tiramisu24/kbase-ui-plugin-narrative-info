@@ -33,27 +33,19 @@
 .data-cells img {
     width: 56px;
     height: 56px;
+    padding: 5px;
 }
 
 .app-first-line{
     font-style: italic;
     margin-left: 15px;
 }
-.default-app{
-    background-color: blanchedalmond;
+.grey-color{
+    color: grey;
 }
-.custom-code{
-    background-color:grey;
-    color: white;
+.almond-color{
+    color: blanchedalmond;
 }
-.app-logos{
-    font-size: 3em;
-    min-width: 55px;
-    height: 55px;
-    border-radius: 10px;
-}
-
-
 
 #summary-section{
     border-bottom: 1px solid black;
