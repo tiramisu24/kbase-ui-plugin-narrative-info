@@ -31,8 +31,8 @@
 }
 
 .data-cells img {
-    width: 42px;
-    height: 42px;
+    width: 56px;
+    height: 56px;
 }
 
 .app-first-line{
@@ -41,16 +41,16 @@
 }
 .default-app{
     background-color: blanchedalmond;
-    border-radius: 10px;
-    width: 42px;
-    height: 42px;
 }
 .custom-code{
     background-color:grey;
     color: white;
+}
+.app-logos{
+    font-size: 3em;
+    min-width: 55px;
+    height: 55px;
     border-radius: 10px;
-    width: 42px;
-    height: 42px;
 }
 
 
@@ -72,7 +72,7 @@
 
 .narrative-info-background{
     border: 1px solid grey;
-    background-color: cornsilk;
+    background-color: whitesmoke;
     border-radius: 15px;
     padding: 20px;
 }

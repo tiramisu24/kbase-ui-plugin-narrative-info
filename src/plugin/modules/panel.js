@@ -284,11 +284,7 @@ define([
                             var appInputs = renderAppInputs(params, appDes, appLogo, wsId);
                             if(appInputs){
                                 appDes.appendChild(appInputs);
-                            }
-              
-
- 
-                            
+                            }                            
 
                             //hide outputs and jobState
                             /**
@@ -452,17 +448,22 @@ define([
 
         function getDisplayIcons(state, info){
             var icon = document.createElement('i');
-            icon.style.fontSize = "3em";
             if(state === "markdown"){
-                icon.setAttribute('class', 'fa fa-paragraph ');
+                // ;
+                // var typeInfo = {
+                //     classes: ["fa-paragraph"],
+                //     color: "blanchedalmond"
+                // }
+                // icon.innerHTML = prettyIcons("square", typeInfo);
+                icon.setAttribute('class', 'fa fa-paragraph app-logos');
             }
             //custom code
             if (state === "custom") {
-                icon.setAttribute('class', 'fa fas fa-terminal  custom-code');
+                icon.setAttribute('class', 'fa fas fa-terminal  custom-code app-logos');
             }
             //apps or code that does not have standard fields
             if (state === "emergency"){
-                icon.setAttribute('class', 'fa fas fa-archive');
+                icon.setAttribute('class', 'fa fas fa-archive app-logos');
             }
             //app
             if(state === "app"){
@@ -473,7 +474,7 @@ define([
                     customLogo.src = imageUrl;
                     icon.appendChild(customLogo);
                 } else {
-                    icon.setAttribute('class', 'fa fas fa-terminal fa-3x default-app');
+                    icon.setAttribute('class', 'fa fas fa-terminal fa-3x default-app app-logos');
                 }
             }
             //data cells
@@ -481,24 +482,37 @@ define([
                 if (info && info.objectInfo && info.objectInfo.type) {
                     var type = runtime.service('type').parseTypeId(info.objectInfo.type);
                     var typeInfo = runtime.getService('type').getIcon({ type: type });
-                    icon.innerHTML = typeInfo.html;
-                    icon.style.color = typeInfo.color;
+                    icon.innerHTML = prettyIcons("data", typeInfo);
                 } else if (info && info.objectInfo && info.objectInfo.typeModule && info.objectInfo.typeName) {
                     var objectInfo = info.objectInfo;
                     //{ "type": { "module": "KBaseGenomes", "name": "Genome" } }
                     var type = { "type": { module: objectInfo.typeModule, "name": objectInfo.typeName } };
                     var typeInfo = runtime.getService('type').getIcon(type);
-                    icon.innerHTML = typeInfo.html;
-                    icon.style.color = typeInfo.color;
-                    
+                    icon.innerHTML = prettyIcons("data", typeInfo);                    
                 } 
                 else {
-                    icon.setAttribute('class', 'fa fas fa-cube fa-3x');
-                    icon.style.color = "cornflowerblue";
+                    var typeInfo = {
+                        classes: ["fa-cube"],
+                        color: "cornflowerblue"
+                    }
+                    icon.innerHTML = prettyIcons("data", typeInfo);                    
                 }
             }
 
             return icon;
+        }
+        function prettyIcons(style, typeInfo){
+            var iconHtml, shape;
+            if(style === "data"){
+                shape = 'fa fa-circle fa-stack-2x'
+            }else if (style === "square"){
+                shape = 'fa fa-square fa-stack-2x';
+            }
+            return t('span')({ class: 'fa-stack fa-2x' }, [
+                t('i')({ class: shape, style: { color: typeInfo.color } }),
+                t('i')({ class: 'fa-inverse fa-stack-1x ' + typeInfo.classes.join(' ') })
+            ])
+            
         }
 
         function appStateIcons(state){
@@ -573,7 +587,8 @@ define([
             narrativesContainer.appendChild(heading);
 
  //owners: ['dianez']
-            Promise.all([workspace.callFunc('list_workspace_info', [{ meta: { is_temporary: "false" }, owners: [runtime.service('session').getUsername()]}])])
+ //, owners: [runtime.service('session').getUsername()]
+            Promise.all([workspace.callFunc('list_workspace_info', [{ meta: { is_temporary: "false" }}])])
             .spread((res) => {
                 res[0].forEach((obj) => {
                     if (obj[8] && obj[8].narrative && obj[8].narrative_nice_name){
