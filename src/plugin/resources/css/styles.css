@@ -7,8 +7,8 @@
     background-color:lightgrey;
 }
 .data-cells{
-    padding: 4px 10px;
-    margin: 4px 10px;
+    padding: 2px 4px;
+    margin: 2px 4px;
     display: flex;
     
 }
@@ -23,7 +23,11 @@
 
 .icon-wrapper{
     display: flex;
-    width: 120px;
+    width: 80px;
+}
+.input-wrapper{
+    display: flex !important;
+    align-items: center;
 }
 .icon-wrapper > i{
     justify-content: center;
@@ -86,3 +90,9 @@
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 4;
 }
+
+.abstract h2{
+    font-size: 20px;
+    margin: 4px 0px;
+}
+

@@ -258,7 +258,6 @@ define([
                             //ignore output cells
                             return;
                         }else if (cell.metadata.kbase.type === "app") {
-
                             var appName;
                             var appKey = cell.metadata.kbase.appCell.app.id;
                             var tag = cell.metadata.kbase.appCell.app.tag;
@@ -355,6 +354,7 @@ define([
         }
 
         async function attachAppInputs(inputObjects, appDes, appLogo, wsId) {
+            var inputDiv = document.createElement('div');
             var multipleInputs = (inputObjects.length >1) ? true : false; 
             var objId = inputObjects[0];
             if(Array.isArray(objId)){
@@ -390,7 +390,7 @@ define([
                     }
                 }
                 var icon = getDisplayIcons("data", info);
-                appLogo.appendChild(getDisplayIcons("data", info))
+                inputDiv.appendChild(getDisplayIcons("data", info))
             } catch (er) {
                 //usually obj has been deleted
                 // appDes.appendChild(textNode("there are no inputs or inputs are deleted"));
@@ -400,7 +400,9 @@ define([
             if(multipleInputs){
                 objName += "...";
             }
-            appDes.appendChild(firstLine(objName));
+            inputDiv.appendChild(firstLine(objName));
+            inputDiv.setAttribute('class', 'input-wrapper');
+            appDes.appendChild(inputDiv);
 
         }
         function renderAppOutputs(exec){
@@ -512,13 +514,15 @@ define([
             return icon;
         }
         function prettyIcons(style, typeInfo){
-            var iconHtml, shape;
+            var iconHtml, shape, iconSize;
             if(style === "data"){
-                shape = 'fa fa-circle fa-stack-2x'
+                shape = 'fa fa-circle fa-stack-2x';
+                iconSize = 'fa-stack fa-1x';
             }else if (style === "square"){
                 shape = 'fa fa-square fa-stack-2x';
+                iconSize = 'fa-stack fa-2x';
             }
-            return t('span')({ class: 'fa-stack fa-2x' }, [
+            return t('span')({ class: iconSize }, [
                 t('i')({ class: shape, style: { color: typeInfo.color } }),
                 t('i')({ class: 'fa-inverse fa-stack-1x ' + typeInfo.classes.join(' ') })
             ])
