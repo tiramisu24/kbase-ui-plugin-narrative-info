@@ -204,6 +204,7 @@ define([
         function makeDetails(data, wsId){
             //add the first cell as abstract (if it exists)
             var abstract = document.createElement('div');
+            abstract.setAttribute('class', 'abstract');
             document.getElementById('summary-section').appendChild(abstract);
             if(data[0].cell_type === 'markdown'){
                 abstract.innerHTML = Marked(data[0].source);

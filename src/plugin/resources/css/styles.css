@@ -51,6 +51,11 @@
     border-bottom: 1px solid black;
 }
 
+#details-section{
+    max-height: 50vh;
+    overflow: auto;
+}
+
 #summary-section > div{
     margin: 15px 0px;
 }
@@ -71,4 +76,13 @@
 
 .popup-container:last-child{
     text-align: center;
+}
+
+.abstract{
+    max-height: 20vh;
+    overflow: auto;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 4;
 }
