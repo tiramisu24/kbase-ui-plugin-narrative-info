@@ -20,7 +20,8 @@
     "bluebird": "^3.0.0",
     "bootstrap": "*",
     "kbase-common-js": "^2.5.0",
-    "kbase-service-clients-js": "^3.3.5"
+    "kbase-service-clients-js": "^3.3.5",
+    "marked": "*"
   },
   "devDependencies": {},
   "ignore": [

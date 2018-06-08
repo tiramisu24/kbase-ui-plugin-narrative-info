@@ -22,6 +22,7 @@ define([
     'kb_common/jsonRpc/genericClient',
     './lib/rpc',
     'jquery',
+    'marked',
     'bootstrap'
 ], function (
     Promise, 
@@ -30,7 +31,8 @@ define([
     Utils,
     GenericClient,
     RPC,
-    $
+    $,
+    Marked
 ) {
     /* DOC: strict mode
         * We always set strict mode with the following magic javascript
@@ -68,7 +70,6 @@ define([
                 url: runtime.config('services.workspace.url'),
                 token: runtime.service('session').getAuthToken()
             });
-        
 
         var rpc = RPC.make({
             runtime: runtime
@@ -206,7 +207,7 @@ define([
             var abstract = document.createElement('div');
             document.getElementById('summary-section').appendChild(abstract);
             if(data[0].cell_type === 'markdown'){
-                abstract.textContent = data[0].source;
+                abstract.innerHTML = Marked(data[0].source);
             }else{
                 abstract.textContent = "no abstract for this narrative"
             }
