@@ -182,7 +182,6 @@ define([
                         var detailsSection = makeDetails(res[0].data[0].data.worksheets[0].cells, this.dataset.wsId);
                         modalDialog.appendChild(detailsSection);                                
                     }
-
                     var openNarrativeButton = document.createElement('a');
                     openNarrativeButton.textContent = "Open this Narrative";
                     openNarrativeButton.href = "narrative/ws." + this.dataset.wsId + ".obj." + this.dataset.narrativeNum;
@@ -452,7 +451,7 @@ define([
             if(state === "markdown"){
                 var typeInfo = {
                     classes: ["fa", "fa-paragraph grey-color"],
-                    color: "blanchedalmond"
+                    color: "silver"
                 }
                 icon.innerHTML = prettyIcons("square", typeInfo);
             }
@@ -460,7 +459,7 @@ define([
             if (state === "custom") {
                 var typeInfo = {
                     classes: ["fa", "fa-terminal almond-color"],
-                    color: "grey"
+                    color: "silver"
                 }
                 icon.innerHTML = prettyIcons("square", typeInfo);
             }
@@ -482,8 +481,8 @@ define([
                     icon.appendChild(customLogo);
                 } else {
                     var typeInfo = {
-                        classes: ["fa", "fa-paragraph grey-color"],
-                        color: "blanchedalmond"
+                        classes: ["fa", "fa-cube grey-color"],
+                        color: "rgb(103,58,183)"
                     }
                     icon.innerHTML = prettyIcons("square", typeInfo);                }
             }
