@@ -243,7 +243,6 @@ define([
 
                 }
                 else if(cell.cell_type === "code"){
-                    // debugger;
                     if(cell.metadata.kbase){
                         if (cell.metadata.kbase.type === "data"){
                             appDes.appendChild(boldTextNode("Data Cell"));
@@ -252,7 +251,7 @@ define([
                             } else {
                                 // appDes.appendChild(firstLine("Unknown"));
                             }
-                            appLogo.appendChild(getDisplayIcons("data", cell.metadata.kbase.dataCell));
+                            appLogo.appendChild(getDisplayIcons("big-data", cell.metadata.kbase.dataCell));
 
                         } else if (cell.metadata.kbase.type === "output"){
                             //ignore output cells
@@ -490,24 +489,24 @@ define([
                     icon.innerHTML = prettyIcons("square", typeInfo);                }
             }
             //data cells
-            if(state === "data"){
+            if(state === "data" || state === "big-data"){
                 if (info && info.objectInfo && info.objectInfo.type) {
                     var type = runtime.service('type').parseTypeId(info.objectInfo.type);
                     var typeInfo = runtime.getService('type').getIcon({ type: type });
-                    icon.innerHTML = prettyIcons("data", typeInfo);
+                    icon.innerHTML = prettyIcons(state, typeInfo);
                 } else if (info && info.objectInfo && info.objectInfo.typeModule && info.objectInfo.typeName) {
                     var objectInfo = info.objectInfo;
                     //{ "type": { "module": "KBaseGenomes", "name": "Genome" } }
                     var type = { "type": { module: objectInfo.typeModule, "name": objectInfo.typeName } };
                     var typeInfo = runtime.getService('type').getIcon(type);
-                    icon.innerHTML = prettyIcons("data", typeInfo);                    
+                    icon.innerHTML = prettyIcons(state, typeInfo);                    
                 } 
                 else {
                     var typeInfo = {
                         classes: ["fa-cube"],
                         color: "cornflowerblue"
                     }
-                    icon.innerHTML = prettyIcons("data", typeInfo);                    
+                    icon.innerHTML = prettyIcons(state, typeInfo);                    
                 }
             }
 
@@ -518,6 +517,9 @@ define([
             if(style === "data"){
                 shape = 'fa fa-circle fa-stack-2x';
                 iconSize = 'fa-stack fa-1x';
+            }else if (style === "big-data"){
+                shape = 'fa fa-circle fa-stack-2x';
+                iconSize = 'fa-stack fa-2x';
             }else if (style === "square"){
                 shape = 'fa fa-square fa-stack-2x';
                 iconSize = 'fa-stack fa-2x';
